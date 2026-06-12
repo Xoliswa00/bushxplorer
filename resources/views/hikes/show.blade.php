@@ -50,14 +50,33 @@
                     <p class="text-stone-500">Points awarded</p>
                     <p class="font-semibold text-stone-800 mt-1">+{{ $hike->points_awarded }} pts</p>
                 </div>
+                @if($hike->includes_transport)
+                <div class="bg-amber-50 rounded-xl p-3 border border-amber-200">
+                    <p class="text-amber-700">Transport available</p>
+                    <p class="font-semibold text-amber-800 mt-1">+ R{{ number_format($hike->transport_fee, 2) }} p/p</p>
+                </div>
+                @endif
             </div>
+
+            {{-- Pickup points preview --}}
+            @if($hike->includes_transport && $hike->pickupPoints->isNotEmpty())
+            <div class="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-xl">
+                <h3 class="text-sm font-semibold text-amber-900 mb-2">Pick-up Points</h3>
+                <ul class="space-y-1">
+                    @foreach($hike->pickupPoints as $point)
+                    <li class="flex justify-between text-sm">
+                        <span class="text-stone-700">{{ $point->name }}</span>
+                        <span class="text-stone-500">{{ \Carbon\Carbon::parse($point->departure_time)->format('H:i') }}</span>
+                    </li>
+                    @endforeach
+                </ul>
+            </div>
+            @endif
 
             @auth
                 @if($hike->spots_remaining > 0)
-                    <a
-                        href="{{ route('booking.form', $hike->id) }}"
-                        class="block text-center w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-xl transition-colors"
-                    >
+                    <a href="{{ route('booking.form', $hike->id) }}"
+                        class="block text-center w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-xl transition-colors">
                         Book My Spot &rarr;
                     </a>
                 @else
@@ -70,6 +89,19 @@
                     Log in to Book &rarr;
                 </a>
             @endauth
+        </div>
+
+        {{-- Gallery section --}}
+        <div class="mb-6">
+            <h2 class="text-xl font-bold text-stone-800 mb-4">Gallery</h2>
+
+            @auth
+            <div class="mb-4">
+                <livewire:gallery.gallery-upload :hike-id="$hike->id" />
+            </div>
+            @endauth
+
+            <livewire:gallery.gallery-viewer :hike-id="$hike->id" />
         </div>
 
     </div>

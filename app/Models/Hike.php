@@ -31,15 +31,19 @@ class Hike extends Model
         'is_cancelled',
         'points_awarded',
         'cover_image',
+        'includes_transport',
+        'transport_fee',
     ];
 
     protected $casts = [
         'departs_at'   => 'datetime',
         'returns_at'   => 'datetime',
-        'is_published' => 'boolean',
-        'is_cancelled' => 'boolean',
-        'price'        => 'decimal:2',
-        'distance_km'  => 'decimal:2',
+        'is_published'       => 'boolean',
+        'is_cancelled'       => 'boolean',
+        'includes_transport' => 'boolean',
+        'price'              => 'decimal:2',
+        'transport_fee'      => 'decimal:2',
+        'distance_km'        => 'decimal:2',
     ];
 
     protected static function booted(): void
@@ -77,5 +81,10 @@ class Hike extends Model
     public function waitlist(): HasMany
     {
         return $this->hasMany(Waitlist::class)->orderBy('position');
+    }
+
+    public function pickupPoints(): HasMany
+    {
+        return $this->hasMany(PickupPoint::class)->orderBy('sort_order');
     }
 }

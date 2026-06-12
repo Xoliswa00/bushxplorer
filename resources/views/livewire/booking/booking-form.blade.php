@@ -17,9 +17,7 @@
 
         {{-- Spots --}}
         <div>
-            <label class="block text-sm font-medium text-stone-700 mb-1">
-                Number of spots
-            </label>
+            <label class="block text-sm font-medium text-stone-700 mb-1">Number of spots</label>
             <input
                 type="number"
                 wire:model.live="spots"
@@ -30,10 +28,72 @@
             @error('spots') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
         </div>
 
+        {{-- Transport (only when hike includes it) --}}
+        @if($this->hike->includes_transport)
+        <div class="p-4 bg-amber-50 border border-amber-200 rounded-xl space-y-4">
+            <label class="flex items-start gap-3 cursor-pointer">
+                <input
+                    type="checkbox"
+                    wire:model.live="wantsTransport"
+                    class="mt-0.5 w-4 h-4 rounded border-stone-300 text-green-600 focus:ring-green-500"
+                />
+                <div>
+                    <p class="text-sm font-semibold text-stone-800">
+                        Include transport
+                        <span class="text-amber-700 font-normal ml-1">+ R{{ number_format($this->hike->transport_fee, 2) }} per spot</span>
+                    </p>
+                    <p class="text-xs text-stone-500 mt-0.5">Pick-up and drop-off included. Select your nearest point below.</p>
+                </div>
+            </label>
+
+            {{-- Pickup point selector --}}
+            @if($wantsTransport)
+            <div class="space-y-2 mt-2">
+                <p class="text-sm font-medium text-stone-700">Select your pick-up point</p>
+
+                @forelse($this->pickupPoints as $point)
+                <label
+                    class="flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition-colors
+                        {{ $pickupPointId == $point->id ? 'border-green-500 bg-green-50' : 'border-stone-200 hover:border-stone-300' }}"
+                >
+                    <input
+                        type="radio"
+                        wire:model.live="pickupPointId"
+                        value="{{ $point->id }}"
+                        class="mt-0.5 text-green-600 focus:ring-green-500"
+                        {{ $point->seats_remaining < $spots ? 'disabled' : '' }}
+                    />
+                    <div class="flex-1">
+                        <p class="text-sm font-semibold text-stone-800">{{ $point->name }}</p>
+                        <p class="text-xs text-stone-500">{{ $point->address }}</p>
+                        <p class="text-xs text-stone-500 mt-0.5">
+                            Departs {{ \Carbon\Carbon::parse($point->departure_time)->format('H:i') }}
+                            &bull;
+                            @if($point->seats_remaining > 0)
+                                <span class="text-green-700">{{ $point->seats_remaining }} seat{{ $point->seats_remaining === 1 ? '' : 's' }} left</span>
+                            @else
+                                <span class="text-red-600">Full</span>
+                            @endif
+                        </p>
+                        @if($point->notes)
+                        <p class="text-xs text-amber-700 mt-0.5">{{ $point->notes }}</p>
+                        @endif
+                    </div>
+                </label>
+                @empty
+                <p class="text-sm text-stone-500">No pickup points configured yet.</p>
+                @endforelse
+
+                @error('pickupPointId') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+            </div>
+            @endif
+        </div>
+        @endif
+
         {{-- Notes --}}
         <div>
             <label class="block text-sm font-medium text-stone-700 mb-1">
-                Special requests / notes <span class="text-stone-400">(optional)</span>
+                Special requests <span class="text-stone-400">(optional)</span>
             </label>
             <textarea
                 wire:model="notes"
@@ -56,13 +116,18 @@
                 <span>&minus; R{{ number_format($this->discountAmount, 2) }}</span>
             </div>
             @endif
+            @if($this->transportFee > 0)
+            <div class="flex justify-between text-sm text-amber-700">
+                <span>Transport ({{ $spots }} &times; R{{ number_format($this->hike->transport_fee, 2) }})</span>
+                <span>+ R{{ number_format($this->transportFee, 2) }}</span>
+            </div>
+            @endif
             <div class="flex justify-between font-bold text-stone-800 text-base pt-1 border-t border-green-200">
                 <span>Total due</span>
                 <span>R{{ number_format($this->amountDue, 2) }}</span>
             </div>
         </div>
 
-        {{-- Member level badge --}}
         @if($this->member->explorerLevel)
         <p class="text-xs text-stone-500">
             Your level:
