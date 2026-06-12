@@ -318,6 +318,6 @@ class EventPlanner extends Component
     public function render()
     {
         return view('livewire.planner.event-planner')
-            ->layout('layouts.app');
+            ->layout('components.layouts.app');
     }
 }

@@ -27,6 +27,6 @@ class PlannerDashboard extends Component
     public function render()
     {
         return view('livewire.planner.planner-dashboard')
-            ->layout('layouts.app');
+            ->layout('components.layouts.app');
     }
 }

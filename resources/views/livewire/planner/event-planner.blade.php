@@ -1,483 +1,686 @@
-<div class="max-w-3xl mx-auto">
+@php
+$stepMeta = [
+    1 => ['icon' => '✦', 'sub' => 'Name, type & poster colour'],
+    2 => ['icon' => '◎', 'sub' => 'Date, place & difficulty'],
+    3 => ['icon' => '◈', 'sub' => 'Headcount & transport'],
+    4 => ['icon' => '◉', 'sub' => 'Budget, pricing & forecast'],
+    5 => ['icon' => '⬡', 'sub' => 'Preview & go live'],
+];
+@endphp
 
-    <div class="flex items-center gap-3 mb-6">
-        <a href="{{ route('planner.index') }}" class="text-sm text-stone-500 hover:text-stone-700">
-            &larr; Plans
-        </a>
-        <span class="text-stone-300">/</span>
-        <h1 class="text-xl font-bold text-stone-800">
-            {{ $planId ? ($title ?: 'Untitled Plan') : 'New Event Plan' }}
-        </h1>
-    </div>
+<div class="max-w-5xl mx-auto">
 
-    {{-- Progress bar --}}
-    <div class="mb-8">
-        <div class="flex items-center gap-0">
-            @foreach($this->stepLabels as $num => $label)
-            @php $done = $num < $step; $active = $num === $step; @endphp
-            <button
-                wire:click="goToStep({{ $num }})"
-                class="flex-1 text-center group"
-            >
-                <div class="flex items-center {{ $loop->first ? '' : '-ml-px' }}">
-                    {{-- Connector line left --}}
-                    @if(!$loop->first)
-                    <div class="flex-1 h-0.5 {{ $done || $active ? 'bg-green-500' : 'bg-stone-200' }} transition-colors"></div>
-                    @endif
+    {{-- Back breadcrumb --}}
+    <a href="{{ route('planner.index') }}"
+        class="inline-flex items-center gap-1.5 text-xs text-stone-400 hover:text-stone-600 mb-4 transition-colors">
+        &#8592; All plans
+    </a>
 
+    {{-- Two-panel wrapper --}}
+    <div class="flex rounded-2xl overflow-hidden shadow-2xl" style="min-height: 620px; border: 1px solid #1a2e20;">
+
+        {{-- ════ LEFT SIDEBAR ════ --}}
+        <div class="w-64 flex-shrink-0 flex flex-col" style="background: #0d1e13;">
+
+            {{-- Brand header --}}
+            <div class="px-6 pt-7 pb-5" style="border-bottom: 1px solid rgba(201,168,76,0.12);">
+                <div class="flex items-center gap-2.5 mb-1">
+                    <div class="w-8 h-8 rounded-lg flex items-center justify-center text-sm"
+                        style="border: 1px solid rgba(201,168,76,0.4); background: rgba(201,168,76,0.08);">🌿</div>
+                    <div>
+                        <p class="text-xs font-bold tracking-widest uppercase" style="color: #c9a84c; letter-spacing: 0.15em;">BushXplorer</p>
+                        <p class="text-[10px]" style="color: #5a7060;">Event Planner</p>
+                    </div>
+                </div>
+
+                {{-- Plan title chip --}}
+                @if($title)
+                <div class="mt-3 px-3 py-2 rounded-lg" style="background: rgba(201,168,76,0.07); border: 1px solid rgba(201,168,76,0.18);">
+                    <p class="text-[10px] font-bold uppercase tracking-widest mb-0.5" style="color: #c9a84c; letter-spacing: 0.15em;">Working on</p>
+                    <p class="text-xs font-semibold truncate" style="color: #d4cfc8;">{{ $title }}</p>
+                </div>
+                @endif
+            </div>
+
+            {{-- Steps navigation --}}
+            <nav class="flex-1 px-4 py-5 space-y-0.5">
+                @foreach($this->stepLabels as $num => $label)
+                @php
+                    $planMaxStep = $planId ? ($plan?->current_step ?? $step) : $step;
+                    $isDone   = $num < $step || ($planId && $planMaxStep > $num);
+                    $isActive = $num === $step;
+                    $canClick = $isDone || $isActive;
+                @endphp
+
+                {{-- Step button --}}
+                <button
+                    @if($canClick) wire:click="goToStep({{ $num }})" @endif
+                    class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all text-left
+                           {{ $isActive ? 'cursor-default' : ($canClick ? 'hover:bg-white/5 cursor-pointer' : 'cursor-not-allowed opacity-40') }}"
+                    style="{{ $isActive ? 'background: rgba(201,168,76,0.1); border: 1px solid rgba(201,168,76,0.25);' : 'border: 1px solid transparent;' }}"
+                >
                     {{-- Circle --}}
-                    <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 border-2 transition-all
-                        {{ $done   ? 'bg-green-600 border-green-600 text-white' : '' }}
-                        {{ $active ? 'bg-white border-green-600 text-green-700' : '' }}
-                        {{ !$done && !$active ? 'bg-white border-stone-300 text-stone-400' : '' }}">
-                        @if($done)
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
-                        </svg>
+                    <div class="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 transition-all"
+                        style="
+                            {{ $isDone   ? 'background: #c9a84c; color: #0a0a0a;' : '' }}
+                            {{ $isActive ? 'border: 2px solid #c9a84c; color: #c9a84c; background: transparent;' : '' }}
+                            {{ !$isDone && !$isActive ? 'border: 1px solid #2d4435; color: #3d5545;' : '' }}
+                        ">
+                        @if($isDone)
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/>
+                            </svg>
                         @else
-                        {{ $num }}
+                            {{ $num }}
                         @endif
                     </div>
 
-                    {{-- Connector line right --}}
-                    @if(!$loop->last)
-                    <div class="flex-1 h-0.5 {{ $done ? 'bg-green-500' : 'bg-stone-200' }} transition-colors"></div>
-                    @endif
+                    {{-- Label --}}
+                    <div class="min-w-0">
+                        <p class="text-xs font-semibold truncate transition-colors"
+                            style="{{ $isActive ? 'color: #c9a84c;' : ($isDone ? 'color: #b5bfb0;' : 'color: #3d5040;') }}">
+                            {{ $label }}
+                        </p>
+                        <p class="text-[10px] truncate mt-0.5" style="color: #2d4030;">
+                            {{ $stepMeta[$num]['sub'] }}
+                        </p>
+                    </div>
+                </button>
+
+                {{-- Connector line --}}
+                @if(!$loop->last)
+                <div class="ml-[24px] w-px h-2.5 transition-colors"
+                    style="{{ $num < $step ? 'background: rgba(201,168,76,0.35);' : 'background: #1a2e1e;' }}">
                 </div>
-                <p class="text-[11px] mt-1.5 font-medium {{ $active ? 'text-green-700' : ($done ? 'text-stone-500' : 'text-stone-400') }}">
-                    {{ $label }}
+                @endif
+
+                @endforeach
+            </nav>
+
+            {{-- Bottom saved indicator --}}
+            <div class="px-6 py-4" style="border-top: 1px solid rgba(255,255,255,0.05);">
+                @if($planId)
+                <div class="flex items-center gap-2">
+                    <div class="w-1.5 h-1.5 rounded-full bg-green-400"></div>
+                    <span class="text-[10px]" style="color: #4a6050;">Progress saved</span>
+                </div>
+                @else
+                <p class="text-[10px]" style="color: #3a4d3e;">Saves on each step</p>
+                @endif
+            </div>
+
+        </div>{{-- /sidebar --}}
+
+        {{-- ════ RIGHT PANEL ════ --}}
+        <div class="flex-1 bg-white flex flex-col min-w-0">
+
+            {{-- Step header --}}
+            <div class="px-8 pt-7 pb-5 border-b border-stone-100">
+                <p class="text-[10px] font-bold uppercase tracking-[0.2em] text-amber-600 mb-1">
+                    Step {{ $step }} &nbsp;/&nbsp; 5
                 </p>
-            </button>
-            @endforeach
-        </div>
-    </div>
-
-    {{-- Step panels --}}
-    <div class="bg-white rounded-2xl shadow-md p-6">
-
-        {{-- ─── STEP 1: Concept ────────────────────────────────────────────── --}}
-        @if($step === 1)
-        <div>
-            <h2 class="text-lg font-bold text-stone-800 mb-1">What's the idea?</h2>
-            <p class="text-sm text-stone-500 mb-5">Describe your concept — we'll shape it into a full plan.</p>
-
-            <div class="space-y-4">
-                <div class="grid grid-cols-3 gap-4">
-                    <div class="col-span-2">
-                        <label class="block text-sm font-medium text-stone-700 mb-1">Event title <span class="text-red-500">*</span></label>
-                        <input type="text" wire:model="title" placeholder="e.g. Drakensberg Sunrise Hike"
-                            class="w-full px-3 py-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"/>
-                        @error('title') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-stone-700 mb-1">Type <span class="text-red-500">*</span></label>
-                        <select wire:model="type" class="w-full px-3 py-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-green-500 bg-white focus:border-transparent capitalize">
-                            @foreach(['hike','workshop','social','corporate','multi_day'] as $t)
-                            <option value="{{ $t }}">{{ ucfirst(str_replace('_',' ',$t)) }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                </div>
-
-                <div>
-                    <label class="block text-sm font-medium text-stone-700 mb-1">Tagline <span class="text-stone-400">(one-liner for the poster)</span></label>
-                    <input type="text" wire:model="tagline" placeholder="Push your limits. Find your trail."
-                        class="w-full px-3 py-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"/>
-                </div>
-
-                <div>
-                    <label class="block text-sm font-medium text-stone-700 mb-1">Description <span class="text-stone-400">(shown on the booking page)</span></label>
-                    <textarea wire:model="description" rows="3" placeholder="What makes this event special?"
-                        class="w-full px-3 py-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent resize-none"></textarea>
-                </div>
-
-                <div>
-                    <label class="block text-sm font-medium text-stone-700 mb-1">Concept notes <span class="text-stone-400">(your raw idea — for your eyes only)</span></label>
-                    <textarea wire:model="conceptNotes" rows="3"
-                        placeholder="Why this route? What vibe are you going for? Any inspiration?"
-                        class="w-full px-3 py-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent resize-none bg-amber-50 border-amber-200"></textarea>
-                </div>
-
-                <div>
-                    <label class="block text-sm font-medium text-stone-700 mb-2">Poster colour theme</label>
-                    <div class="flex gap-2 flex-wrap">
-                        @foreach(['#166534'=>'Forest','#1e3a5f'=>'Navy','#7c2d12'=>'Rust','#4a044e'=>'Plum','#134e4a'=>'Teal','#1c1917'=>'Onyx'] as $hex=>$name)
-                        <button type="button" wire:click="$set('coverColor','{{ $hex }}')"
-                            class="w-8 h-8 rounded-full border-2 transition-all {{ $coverColor === $hex ? 'border-white ring-2 ring-stone-800 scale-110' : 'border-white' }}"
-                            style="background-color: {{ $hex }}" title="{{ $name }}"></button>
-                        @endforeach
-                    </div>
-                </div>
+                <h2 class="text-2xl font-bold text-stone-900 tracking-tight">{{ $this->stepLabels[$step] }}</h2>
+                <p class="text-sm text-stone-400 mt-0.5">{{ $stepMeta[$step]['sub'] }}</p>
             </div>
-        </div>
 
-        {{-- ─── STEP 2: Logistics ──────────────────────────────────────────── --}}
-        @elseif($step === 2)
-        <div>
-            <h2 class="text-lg font-bold text-stone-800 mb-1">When and where?</h2>
-            <p class="text-sm text-stone-500 mb-5">Lock down the time, location, and difficulty.</p>
+            {{-- ─────────────────────────────────────────────────── --}}
+            {{-- STEP CONTENT                                         --}}
+            {{-- ─────────────────────────────────────────────────── --}}
+            <div class="flex-1 px-8 py-6 overflow-y-auto">
 
-            <div class="space-y-4">
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-sm font-medium text-stone-700 mb-1">Location / area <span class="text-red-500">*</span></label>
-                        <input type="text" wire:model="location" placeholder="e.g. Drakensberg, KZN"
-                            class="w-full px-3 py-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"/>
-                        @error('location') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-stone-700 mb-1">Trail name <span class="text-stone-400">(optional)</span></label>
-                        <input type="text" wire:model="trailName" placeholder="e.g. Tugela Falls Trail"
-                            class="w-full px-3 py-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"/>
-                    </div>
-                </div>
+                @php
+                    function plannerLabel(string $text, bool $required = false): string {
+                        $req = $required ? '<span style="color:#ef4444;">*</span>' : '';
+                        return '<label class="block text-[10px] font-bold uppercase tracking-[0.15em] text-stone-400 mb-1.5">'.$text.' '.$req.'</label>';
+                    }
+                @endphp
 
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-sm font-medium text-stone-700 mb-1">Departs <span class="text-red-500">*</span></label>
-                        <input type="datetime-local" wire:model="departsAt"
-                            class="w-full px-3 py-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"/>
-                        @error('departsAt') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-stone-700 mb-1">Returns <span class="text-stone-400">(optional)</span></label>
-                        <input type="datetime-local" wire:model="returnsAt"
-                            class="w-full px-3 py-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"/>
-                        @error('returnsAt') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
-                    </div>
-                </div>
+                {{-- ─── STEP 1: Concept ────────────────────────── --}}
+                @if($step === 1)
+                <div class="space-y-5 max-w-xl">
 
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-sm font-medium text-stone-700 mb-1">Difficulty</label>
-                        <select wire:model="difficulty" class="w-full px-3 py-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-green-500 bg-white">
-                            <option value="easy">Easy</option>
-                            <option value="moderate">Moderate</option>
-                            <option value="hard">Hard</option>
-                            <option value="extreme">Extreme</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-stone-700 mb-1">Meeting point</label>
-                        <input type="text" wire:model="meetingPoint" placeholder="e.g. Amphitheatre car park"
-                            class="w-full px-3 py-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"/>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        {{-- ─── STEP 3: Capacity & Transport ───────────────────────────────── --}}
-        @elseif($step === 3)
-        <div>
-            <h2 class="text-lg font-bold text-stone-800 mb-1">Capacity &amp; Transport</h2>
-            <p class="text-sm text-stone-500 mb-5">How many people and how will they get there?</p>
-
-            <div class="space-y-5">
-                <div class="grid grid-cols-3 gap-4">
-                    <div>
-                        <label class="block text-sm font-medium text-stone-700 mb-1">Max spots <span class="text-red-500">*</span></label>
-                        <input type="number" wire:model="maxCapacity" min="2"
-                            class="w-full px-3 py-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-green-500 text-center"/>
-                        @error('maxCapacity') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-stone-700 mb-1">Min to run <span class="text-red-500">*</span></label>
-                        <input type="number" wire:model="minCapacity" min="1"
-                            class="w-full px-3 py-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-green-500 text-center"/>
-                        @error('minCapacity') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-stone-700 mb-1">Points awarded</label>
-                        <input type="number" wire:model="pointsAwarded" min="0"
-                            class="w-full px-3 py-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-green-500 text-center"/>
-                    </div>
-                </div>
-
-                {{-- Transport toggle --}}
-                <div class="p-4 bg-amber-50 border border-amber-200 rounded-xl">
-                    <label class="flex items-center gap-3 cursor-pointer">
-                        <input type="checkbox" wire:model.live="includesTransport"
-                            class="w-4 h-4 rounded border-stone-300 text-green-600 focus:ring-green-500"/>
-                        <div>
-                            <p class="text-sm font-semibold text-stone-800">Include transport in this event</p>
-                            <p class="text-xs text-stone-500 mt-0.5">Members can opt in at booking and choose a pickup point</p>
-                        </div>
-                    </label>
-
-                    @if($includesTransport)
-                    <div class="mt-4 space-y-4">
-                        <div>
-                            <label class="block text-sm font-medium text-stone-700 mb-1">Transport fee per person (R)</label>
-                            <input type="number" wire:model="transportFee" min="0" step="0.01"
-                                class="w-40 px-3 py-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-green-500 text-center"/>
-                            @error('transportFee') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
-                        </div>
-
-                        {{-- Pickup points builder --}}
-                        <div>
-                            <div class="flex items-center justify-between mb-2">
-                                <p class="text-sm font-medium text-stone-700">Pick-up points</p>
-                                <button type="button" wire:click="addPickupPoint"
-                                    class="text-xs text-green-700 hover:text-green-900 font-semibold">+ Add point</button>
-                            </div>
-
-                            @forelse($pickupPoints as $idx => $point)
-                            <div wire:key="pp-{{ $idx }}" class="grid grid-cols-12 gap-2 mb-2 items-start p-3 bg-white rounded-xl border border-stone-200">
-                                <div class="col-span-4">
-                                    <input type="text" wire:model="pickupPoints.{{ $idx }}.name" placeholder="Name (e.g. Sandton City)"
-                                        class="w-full px-2 py-1.5 text-sm border border-stone-300 rounded-lg focus:ring-1 focus:ring-green-500"/>
-                                </div>
-                                <div class="col-span-3">
-                                    <input type="text" wire:model="pickupPoints.{{ $idx }}.address" placeholder="Address"
-                                        class="w-full px-2 py-1.5 text-sm border border-stone-300 rounded-lg focus:ring-1 focus:ring-green-500"/>
-                                </div>
-                                <div class="col-span-2">
-                                    <input type="time" wire:model="pickupPoints.{{ $idx }}.departure_time"
-                                        class="w-full px-2 py-1.5 text-sm border border-stone-300 rounded-lg focus:ring-1 focus:ring-green-500"/>
-                                </div>
-                                <div class="col-span-2">
-                                    <input type="number" wire:model="pickupPoints.{{ $idx }}.max_seats" min="1" placeholder="Seats"
-                                        class="w-full px-2 py-1.5 text-sm border border-stone-300 rounded-lg focus:ring-1 focus:ring-green-500 text-center"/>
-                                </div>
-                                <div class="col-span-1 flex justify-center pt-1">
-                                    <button type="button" wire:click="removePickupPoint({{ $idx }})"
-                                        class="text-stone-400 hover:text-red-500 transition-colors text-sm">✕</button>
-                                </div>
-                            </div>
-                            @empty
-                            <p class="text-xs text-stone-400 italic">No pickup points yet — add at least one.</p>
-                            @endforelse
-                        </div>
-                    </div>
-                    @endif
-                </div>
-            </div>
-        </div>
-
-        {{-- ─── STEP 4: Financials ─────────────────────────────────────────── --}}
-        @elseif($step === 4)
-        <div>
-            <h2 class="text-lg font-bold text-stone-800 mb-1">Financials</h2>
-            <p class="text-sm text-stone-500 mb-5">Budget your expenses and set your ticket price.</p>
-
-            <div class="space-y-6">
-
-                {{-- Expense line items --}}
-                <div>
-                    <div class="flex items-center justify-between mb-3">
-                        <h3 class="text-sm font-semibold text-stone-700">Expense Budget</h3>
-                        <button type="button" wire:click="addExpense"
-                            class="text-xs text-green-700 hover:text-green-900 font-semibold">+ Add expense</button>
-                    </div>
-
-                    @forelse($expenses as $idx => $expense)
-                    <div wire:key="exp-{{ $idx }}" class="grid grid-cols-12 gap-2 mb-2 items-center">
-                        <div class="col-span-5">
-                            <input type="text" wire:model.live="expenses.{{ $idx }}.description"
-                                placeholder="e.g. Bus hire"
-                                class="w-full px-3 py-2 text-sm border border-stone-300 rounded-lg focus:ring-1 focus:ring-green-500"/>
-                        </div>
+                    <div class="grid grid-cols-5 gap-4">
                         <div class="col-span-3">
-                            <select wire:model="expenses.{{ $idx }}.category"
-                                class="w-full px-2 py-2 text-sm border border-stone-300 rounded-lg focus:ring-1 focus:ring-green-500 bg-white">
-                                @foreach(['transport','permits','equipment','refreshments','marketing','other'] as $cat)
-                                <option value="{{ $cat }}">{{ ucfirst($cat) }}</option>
+                            <label class="block text-[10px] font-bold uppercase tracking-[0.15em] text-stone-400 mb-1.5">
+                                Event title <span class="text-red-400">*</span>
+                            </label>
+                            <input type="text" wire:model="title"
+                                placeholder="e.g. Drakensberg Sunrise Hike"
+                                class="w-full px-4 py-3 border border-stone-200 rounded-xl text-stone-900 font-medium text-sm bg-white
+                                       focus:outline-none focus:ring-2 focus:ring-green-600/20 focus:border-green-700
+                                       placeholder:text-stone-300 transition-colors"/>
+                            @error('title') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
+                        </div>
+                        <div class="col-span-2">
+                            <label class="block text-[10px] font-bold uppercase tracking-[0.15em] text-stone-400 mb-1.5">
+                                Type <span class="text-red-400">*</span>
+                            </label>
+                            <select wire:model="type"
+                                class="w-full px-4 py-3 border border-stone-200 rounded-xl text-stone-900 font-medium text-sm bg-white
+                                       focus:outline-none focus:ring-2 focus:ring-green-600/20 focus:border-green-700
+                                       transition-colors appearance-none">
+                                @foreach(['hike'=>'Hike','workshop'=>'Workshop','social'=>'Social','corporate'=>'Corporate','multi_day'=>'Multi-Day'] as $v=>$l)
+                                <option value="{{ $v }}">{{ $l }}</option>
                                 @endforeach
                             </select>
                         </div>
-                        <div class="col-span-3">
-                            <div class="relative">
-                                <span class="absolute left-3 top-2 text-sm text-stone-400">R</span>
-                                <input type="number" wire:model.live="expenses.{{ $idx }}.amount"
-                                    placeholder="0.00" step="0.01" min="0"
-                                    class="w-full pl-7 pr-3 py-2 text-sm border border-stone-300 rounded-lg focus:ring-1 focus:ring-green-500"/>
-                            </div>
-                        </div>
-                        <div class="col-span-1 flex justify-center">
-                            <button type="button" wire:click="removeExpense({{ $idx }})"
-                                class="text-stone-400 hover:text-red-500 text-sm transition-colors">✕</button>
-                        </div>
-                    </div>
-                    @empty
-                    <p class="text-xs text-stone-400 italic mb-2">No expenses added — enter your costs to get an accurate price.</p>
-                    @endforelse
-
-                    <div class="flex justify-end pt-2 border-t border-stone-100 mt-2">
-                        <span class="text-sm font-semibold text-stone-800">
-                            Total expenses: R{{ number_format($this->totalExpenses, 2) }}
-                        </span>
-                    </div>
-                </div>
-
-                {{-- Pricing calculator --}}
-                <div class="p-4 bg-green-50 rounded-xl border border-green-200 space-y-3">
-                    <h3 class="text-sm font-semibold text-stone-700">Pricing Calculator</h3>
-
-                    <div class="grid grid-cols-2 gap-4 text-sm">
-                        <div>
-                            <p class="text-stone-500">Break-even (at {{ $minCapacity }} people)</p>
-                            <p class="text-lg font-bold text-stone-800">R{{ number_format($this->breakEvenPrice, 2) }}</p>
-                        </div>
-                        <div>
-                            <label class="block text-stone-500 mb-1">Profit margin target</label>
-                            <div class="flex items-center gap-2">
-                                <input type="number" wire:model.live="targetMarginPct" min="0" max="300" step="1"
-                                    class="w-20 px-2 py-1.5 border border-stone-300 rounded-lg focus:ring-1 focus:ring-green-500 text-center"/>
-                                <span class="text-stone-500">%</span>
-                            </div>
-                        </div>
                     </div>
 
-                    <div class="flex items-center justify-between py-2 border-t border-green-200">
-                        <div>
-                            <p class="text-sm text-stone-600">Suggested ticket price</p>
-                            <p class="text-2xl font-bold text-green-700">R{{ number_format($this->suggestedPrice, 2) }}</p>
-                        </div>
-                        <label class="flex items-center gap-2 cursor-pointer">
-                            <input type="checkbox" wire:model.live="useManualPrice"
-                                class="w-4 h-4 rounded border-stone-300 text-green-600"/>
-                            <span class="text-sm text-stone-600">Set manually</span>
+                    <div>
+                        <label class="block text-[10px] font-bold uppercase tracking-[0.15em] text-stone-400 mb-1.5">
+                            Tagline <span class="text-stone-300 normal-case tracking-normal font-normal">(appears on the poster)</span>
                         </label>
+                        <input type="text" wire:model="tagline"
+                            placeholder="Push your limits. Find your trail."
+                            class="w-full px-4 py-3 border border-stone-200 rounded-xl text-stone-900 font-medium text-sm bg-white
+                                   focus:outline-none focus:ring-2 focus:ring-green-600/20 focus:border-green-700
+                                   placeholder:text-stone-300 transition-colors"/>
                     </div>
 
-                    @if($useManualPrice)
-                    <div class="flex items-center gap-2">
-                        <span class="text-stone-500 font-medium">R</span>
-                        <input type="number" wire:model.live="price" min="0" step="0.01" placeholder="{{ $this->suggestedPrice }}"
-                            class="w-36 px-3 py-2 border border-green-400 rounded-lg focus:ring-2 focus:ring-green-500 font-bold text-lg"/>
-                        @error('price') <p class="text-xs text-red-600">{{ $message }}</p> @enderror
+                    <div>
+                        <label class="block text-[10px] font-bold uppercase tracking-[0.15em] text-stone-400 mb-1.5">
+                            Description <span class="text-stone-300 normal-case tracking-normal font-normal">(shown on the booking page)</span>
+                        </label>
+                        <textarea wire:model="description" rows="3"
+                            placeholder="What makes this event special? What will participants experience?"
+                            class="w-full px-4 py-3 border border-stone-200 rounded-xl text-stone-900 font-medium text-sm bg-white
+                                   focus:outline-none focus:ring-2 focus:ring-green-600/20 focus:border-green-700
+                                   placeholder:text-stone-300 transition-colors resize-none leading-relaxed"></textarea>
                     </div>
-                    @endif
-                </div>
 
-                {{-- Revenue forecast --}}
-                <div>
-                    <h3 class="text-sm font-semibold text-stone-700 mb-3">Revenue Forecast at R{{ number_format($this->effectivePrice, 2) }}/ticket</h3>
-                    <div class="grid grid-cols-3 gap-3">
-                        @foreach($this->revenueForecast as $scenario => $data)
-                        @php
-                            $positive = $data['profit'] >= 0;
-                            $bg = $scenario === 'expected' ? 'bg-green-50 border-green-300' : 'bg-stone-50 border-stone-200';
-                        @endphp
-                        <div class="p-3 rounded-xl border {{ $bg }} text-center">
-                            <p class="text-xs text-stone-500 uppercase tracking-wide font-semibold">{{ ucfirst($scenario) }}</p>
-                            <p class="text-sm text-stone-600 mt-1">{{ $data['headcount'] }} people</p>
-                            <p class="text-lg font-bold mt-1 {{ $positive ? 'text-green-700' : 'text-red-600' }}">
-                                {{ $positive ? '+' : '' }}R{{ number_format(abs($data['profit']), 0) }}
-                            </p>
-                            <p class="text-xs text-stone-400 mt-0.5">{{ $positive ? 'profit' : 'loss' }}</p>
+                    <div class="p-4 rounded-xl bg-amber-50/60 border border-amber-100">
+                        <label class="block text-[10px] font-bold uppercase tracking-[0.15em] text-amber-600 mb-1.5">
+                            Concept notes <span class="text-amber-400 normal-case tracking-normal font-normal">(private — your raw idea)</span>
+                        </label>
+                        <textarea wire:model="conceptNotes" rows="2"
+                            placeholder="Why this route? What vibe? Any inspiration or references?"
+                            class="w-full px-4 py-3 border border-amber-200 rounded-xl text-stone-800 font-medium text-sm bg-amber-50
+                                   focus:outline-none focus:ring-2 focus:ring-amber-400/20 focus:border-amber-400
+                                   placeholder:text-amber-300 transition-colors resize-none leading-relaxed"></textarea>
+                    </div>
+
+                    <div>
+                        <label class="block text-[10px] font-bold uppercase tracking-[0.15em] text-stone-400 mb-3">
+                            Poster colour theme
+                        </label>
+                        <div class="flex gap-3 flex-wrap">
+                            @foreach([
+                                '#166534' => ['name'=>'Forest',  'light'=>'#dcfce7'],
+                                '#1e3a5f' => ['name'=>'Navy',    'light'=>'#dbeafe'],
+                                '#7c2d12' => ['name'=>'Rust',    'light'=>'#fee2e2'],
+                                '#4a044e' => ['name'=>'Plum',    'light'=>'#f3e8ff'],
+                                '#134e4a' => ['name'=>'Teal',    'light'=>'#ccfbf1'],
+                                '#1c1917' => ['name'=>'Onyx',    'light'=>'#e7e5e4'],
+                                '#713f12' => ['name'=>'Bourbon', 'light'=>'#fef3c7'],
+                                '#0c4a6e' => ['name'=>'Ocean',   'light'=>'#e0f2fe'],
+                            ] as $hex => $meta)
+                            <button type="button" wire:click="$set('coverColor','{{ $hex }}')"
+                                class="flex flex-col items-center gap-1.5 transition-all">
+                                <div class="w-9 h-9 rounded-full transition-all shadow-md {{ $coverColor === $hex ? 'ring-2 ring-offset-2 ring-stone-800 scale-110' : 'hover:scale-105' }}"
+                                    style="background-color: {{ $hex }}"></div>
+                                <span class="text-[9px] font-semibold uppercase tracking-wide {{ $coverColor === $hex ? 'text-stone-700' : 'text-stone-400' }}">
+                                    {{ $meta['name'] }}
+                                </span>
+                            </button>
+                            @endforeach
                         </div>
-                        @endforeach
                     </div>
+
                 </div>
 
-            </div>
-        </div>
+                {{-- ─── STEP 2: Logistics ──────────────────────── --}}
+                @elseif($step === 2)
+                <div class="space-y-5 max-w-xl">
 
-        {{-- ─── STEP 5: Review & Publish ───────────────────────────────────── --}}
-        @elseif($step === 5)
-        <div>
-            <h2 class="text-lg font-bold text-stone-800 mb-1">Review &amp; Publish</h2>
-            <p class="text-sm text-stone-500 mb-5">Everything looks good? Hit publish to go live.</p>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-[10px] font-bold uppercase tracking-[0.15em] text-stone-400 mb-1.5">
+                                Location / Area <span class="text-red-400">*</span>
+                            </label>
+                            <input type="text" wire:model="location"
+                                placeholder="e.g. Drakensberg, KZN"
+                                class="w-full px-4 py-3 border border-stone-200 rounded-xl text-stone-900 font-medium text-sm bg-white
+                                       focus:outline-none focus:ring-2 focus:ring-green-600/20 focus:border-green-700
+                                       placeholder:text-stone-300 transition-colors"/>
+                            @error('location') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold uppercase tracking-[0.15em] text-stone-400 mb-1.5">
+                                Trail Name <span class="text-stone-300 normal-case tracking-normal font-normal">(optional)</span>
+                            </label>
+                            <input type="text" wire:model="trailName"
+                                placeholder="e.g. Tugela Falls Trail"
+                                class="w-full px-4 py-3 border border-stone-200 rounded-xl text-stone-900 font-medium text-sm bg-white
+                                       focus:outline-none focus:ring-2 focus:ring-green-600/20 focus:border-green-700
+                                       placeholder:text-stone-300 transition-colors"/>
+                        </div>
+                    </div>
 
-            @php $p = $plan; @endphp
-            @if($p)
-            <div class="space-y-4 text-sm">
+                    <div>
+                        <label class="block text-[10px] font-bold uppercase tracking-[0.15em] text-stone-400 mb-1.5">
+                            Difficulty <span class="text-red-400">*</span>
+                        </label>
+                        <div class="grid grid-cols-4 gap-2">
+                            @foreach(['easy'=>['🟢','text-green-700','bg-green-50 border-green-300'],'moderate'=>['🟡','text-amber-700','bg-amber-50 border-amber-300'],'hard'=>['🟠','text-orange-700','bg-orange-50 border-orange-300'],'extreme'=>['🔴','text-red-700','bg-red-50 border-red-300']] as $val=>[$emoji,$tc,$bc])
+                            <button type="button" wire:click="$set('difficulty','{{ $val }}')"
+                                class="py-2.5 rounded-xl border text-xs font-bold uppercase tracking-wide transition-all
+                                       {{ $difficulty === $val ? $bc.' '.$tc.' ring-2 ring-offset-1 ring-current' : 'border-stone-200 text-stone-400 bg-white hover:border-stone-300' }}">
+                                {{ $emoji }} {{ ucfirst($val) }}
+                            </button>
+                            @endforeach
+                        </div>
+                        @error('difficulty') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
+                    </div>
 
-                <div class="grid grid-cols-2 gap-4">
-                    <div class="p-4 bg-stone-50 rounded-xl">
-                        <p class="text-xs font-semibold text-stone-500 uppercase tracking-wide mb-2">Event</p>
-                        <p class="font-bold text-stone-800 text-base">{{ $p->title }}</p>
-                        @if($p->tagline) <p class="text-stone-500 italic mt-0.5">{{ $p->tagline }}</p> @endif
-                        <p class="mt-1 capitalize text-stone-600">{{ str_replace('_',' ',$p->type) }}</p>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-[10px] font-bold uppercase tracking-[0.15em] text-stone-400 mb-1.5">
+                                Departs <span class="text-red-400">*</span>
+                            </label>
+                            <input type="datetime-local" wire:model="departsAt"
+                                class="w-full px-4 py-3 border border-stone-200 rounded-xl text-stone-900 font-medium text-sm bg-white
+                                       focus:outline-none focus:ring-2 focus:ring-green-600/20 focus:border-green-700
+                                       transition-colors"/>
+                            @error('departsAt') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold uppercase tracking-[0.15em] text-stone-400 mb-1.5">
+                                Returns <span class="text-stone-300 normal-case tracking-normal font-normal">(optional)</span>
+                            </label>
+                            <input type="datetime-local" wire:model="returnsAt"
+                                class="w-full px-4 py-3 border border-stone-200 rounded-xl text-stone-900 font-medium text-sm bg-white
+                                       focus:outline-none focus:ring-2 focus:ring-green-600/20 focus:border-green-700
+                                       transition-colors"/>
+                            @error('returnsAt') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
+                        </div>
                     </div>
-                    <div class="p-4 bg-stone-50 rounded-xl">
-                        <p class="text-xs font-semibold text-stone-500 uppercase tracking-wide mb-2">Date &amp; Place</p>
-                        <p class="font-medium text-stone-800">{{ $p->departs_at?->format('D, d M Y H:i') ?? '—' }}</p>
-                        <p class="text-stone-600 mt-0.5">{{ $p->location ?? '—' }}</p>
-                        @if($p->meeting_point) <p class="text-stone-500 mt-0.5">Meet: {{ $p->meeting_point }}</p> @endif
+
+                    <div>
+                        <label class="block text-[10px] font-bold uppercase tracking-[0.15em] text-stone-400 mb-1.5">
+                            Meeting Point
+                        </label>
+                        <input type="text" wire:model="meetingPoint"
+                            placeholder="e.g. Amphitheatre parking area, Royal Natal"
+                            class="w-full px-4 py-3 border border-stone-200 rounded-xl text-stone-900 font-medium text-sm bg-white
+                                   focus:outline-none focus:ring-2 focus:ring-green-600/20 focus:border-green-700
+                                   placeholder:text-stone-300 transition-colors"/>
                     </div>
-                    <div class="p-4 bg-stone-50 rounded-xl">
-                        <p class="text-xs font-semibold text-stone-500 uppercase tracking-wide mb-2">Capacity</p>
-                        <p class="font-medium text-stone-800">{{ $p->min_capacity }}–{{ $p->max_capacity }} people</p>
-                        <p class="capitalize text-stone-600">{{ $p->difficulty ?? 'moderate' }}</p>
+
+                </div>
+
+                {{-- ─── STEP 3: Capacity & Transport ───────────── --}}
+                @elseif($step === 3)
+                <div class="space-y-5 max-w-xl">
+
+                    <div class="grid grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-[10px] font-bold uppercase tracking-[0.15em] text-stone-400 mb-1.5">
+                                Max spots <span class="text-red-400">*</span>
+                            </label>
+                            <input type="number" wire:model="maxCapacity" min="2"
+                                class="w-full px-4 py-3 border border-stone-200 rounded-xl text-stone-900 font-bold text-xl text-center bg-white
+                                       focus:outline-none focus:ring-2 focus:ring-green-600/20 focus:border-green-700 transition-colors"/>
+                            @error('maxCapacity') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold uppercase tracking-[0.15em] text-stone-400 mb-1.5">
+                                Min to run <span class="text-red-400">*</span>
+                            </label>
+                            <input type="number" wire:model="minCapacity" min="1"
+                                class="w-full px-4 py-3 border border-stone-200 rounded-xl text-stone-900 font-bold text-xl text-center bg-white
+                                       focus:outline-none focus:ring-2 focus:ring-green-600/20 focus:border-green-700 transition-colors"/>
+                            @error('minCapacity') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold uppercase tracking-[0.15em] text-stone-400 mb-1.5">
+                                Points awarded
+                            </label>
+                            <input type="number" wire:model="pointsAwarded" min="0"
+                                class="w-full px-4 py-3 border border-stone-200 rounded-xl text-stone-900 font-bold text-xl text-center bg-white
+                                       focus:outline-none focus:ring-2 focus:ring-green-600/20 focus:border-green-700 transition-colors"/>
+                        </div>
                     </div>
-                    <div class="p-4 bg-green-50 rounded-xl border border-green-200">
-                        <p class="text-xs font-semibold text-stone-500 uppercase tracking-wide mb-2">Pricing</p>
-                        <p class="font-bold text-green-700 text-lg">R{{ number_format($p->price ?? $p->suggestedPrice(), 2) }}</p>
-                        @if($p->includes_transport)
-                        <p class="text-amber-700 mt-0.5">+ R{{ number_format($p->transport_fee, 2) }} transport</p>
+
+                    {{-- Transport toggle --}}
+                    <div class="rounded-xl overflow-hidden border {{ $includesTransport ? 'border-amber-300' : 'border-stone-200' }} transition-colors">
+                        <button type="button" wire:click="$set('includesTransport', {{ $includesTransport ? 'false' : 'true' }})"
+                            class="w-full flex items-center justify-between p-4 text-left transition-colors
+                                   {{ $includesTransport ? 'bg-amber-50' : 'bg-stone-50 hover:bg-stone-100' }}">
+                            <div class="flex items-center gap-3">
+                                <div class="w-9 h-9 rounded-xl flex items-center justify-center text-lg
+                                            {{ $includesTransport ? 'bg-amber-100' : 'bg-stone-200' }}">🚌</div>
+                                <div>
+                                    <p class="text-sm font-semibold text-stone-800">Include transport</p>
+                                    <p class="text-xs text-stone-400 mt-0.5">Members opt in at booking &amp; choose pickup point</p>
+                                </div>
+                            </div>
+                            <div class="w-12 h-6 rounded-full flex items-center transition-all flex-shrink-0
+                                        {{ $includesTransport ? 'bg-amber-400 justify-end pr-0.5' : 'bg-stone-300 justify-start pl-0.5' }}">
+                                <div class="w-5 h-5 rounded-full bg-white shadow-sm"></div>
+                            </div>
+                        </button>
+
+                        @if($includesTransport)
+                        <div class="p-4 border-t border-amber-200 bg-white space-y-4">
+                            <div>
+                                <label class="block text-[10px] font-bold uppercase tracking-[0.15em] text-stone-400 mb-1.5">
+                                    Transport fee per person (R)
+                                </label>
+                                <div class="relative w-36">
+                                    <span class="absolute left-4 top-1/2 -translate-y-1/2 text-stone-400 font-semibold text-sm">R</span>
+                                    <input type="number" wire:model="transportFee" min="0" step="0.01"
+                                        class="w-full pl-8 pr-4 py-3 border border-stone-200 rounded-xl text-stone-900 font-bold text-center bg-white
+                                               focus:outline-none focus:ring-2 focus:ring-amber-400/30 focus:border-amber-400 transition-colors"/>
+                                </div>
+                                @error('transportFee') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
+                            </div>
+
+                            {{-- Pickup points --}}
+                            <div>
+                                <div class="flex items-center justify-between mb-2">
+                                    <label class="block text-[10px] font-bold uppercase tracking-[0.15em] text-stone-400">Pickup Points</label>
+                                    <button type="button" wire:click="addPickupPoint"
+                                        class="text-xs font-semibold text-amber-700 hover:text-amber-900 flex items-center gap-1 transition-colors">
+                                        + Add stop
+                                    </button>
+                                </div>
+
+                                @forelse($pickupPoints as $idx => $pp)
+                                <div wire:key="pp-{{ $idx }}" class="grid grid-cols-12 gap-2 mb-2 p-3 bg-stone-50 rounded-xl border border-stone-100">
+                                    <div class="col-span-4">
+                                        <p class="text-[9px] font-bold uppercase tracking-wide text-stone-400 mb-1">Name</p>
+                                        <input type="text" wire:model="pickupPoints.{{ $idx }}.name" placeholder="e.g. Sandton City"
+                                            class="w-full px-2.5 py-1.5 text-xs border border-stone-200 rounded-lg bg-white focus:outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-400/20"/>
+                                    </div>
+                                    <div class="col-span-3">
+                                        <p class="text-[9px] font-bold uppercase tracking-wide text-stone-400 mb-1">Address</p>
+                                        <input type="text" wire:model="pickupPoints.{{ $idx }}.address" placeholder="Street / landmark"
+                                            class="w-full px-2.5 py-1.5 text-xs border border-stone-200 rounded-lg bg-white focus:outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-400/20"/>
+                                    </div>
+                                    <div class="col-span-2">
+                                        <p class="text-[9px] font-bold uppercase tracking-wide text-stone-400 mb-1">Time</p>
+                                        <input type="time" wire:model="pickupPoints.{{ $idx }}.departure_time"
+                                            class="w-full px-2 py-1.5 text-xs border border-stone-200 rounded-lg bg-white focus:outline-none focus:border-amber-400"/>
+                                    </div>
+                                    <div class="col-span-2">
+                                        <p class="text-[9px] font-bold uppercase tracking-wide text-stone-400 mb-1">Seats</p>
+                                        <input type="number" wire:model="pickupPoints.{{ $idx }}.max_seats" min="1"
+                                            class="w-full px-2 py-1.5 text-xs border border-stone-200 rounded-lg bg-white text-center focus:outline-none focus:border-amber-400"/>
+                                    </div>
+                                    <div class="col-span-1 flex items-end justify-center pb-1">
+                                        <button type="button" wire:click="removePickupPoint({{ $idx }})"
+                                            class="text-stone-300 hover:text-red-400 transition-colors text-sm leading-none">✕</button>
+                                    </div>
+                                </div>
+                                @empty
+                                <p class="text-xs text-stone-300 italic py-2">No stops yet — add at least one pickup point.</p>
+                                @endforelse
+                            </div>
+                        </div>
                         @endif
                     </div>
+
                 </div>
 
-                @if(collect($p->expenses ?? [])->isNotEmpty())
-                <div class="p-4 bg-stone-50 rounded-xl">
-                    <p class="text-xs font-semibold text-stone-500 uppercase tracking-wide mb-2">Expenses</p>
-                    @foreach($p->expenses as $e)
-                    <div class="flex justify-between text-stone-600 py-0.5">
-                        <span>{{ $e['description'] }}</span>
-                        <span class="font-medium">R{{ number_format($e['amount'], 2) }}</span>
+                {{-- ─── STEP 4: Financials ─────────────────────── --}}
+                @elseif($step === 4)
+                <div class="flex gap-5" style="min-height: 380px;">
+
+                    {{-- Left: expense builder --}}
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center justify-between mb-3">
+                            <label class="text-[10px] font-bold uppercase tracking-[0.15em] text-stone-400">Expense Budget</label>
+                            <button type="button" wire:click="addExpense"
+                                class="text-xs font-semibold text-green-700 hover:text-green-900 flex items-center gap-1 transition-colors">
+                                + Add expense
+                            </button>
+                        </div>
+
+                        @forelse($expenses as $idx => $expense)
+                        <div wire:key="exp-{{ $idx }}" class="grid grid-cols-12 gap-1.5 mb-2 items-center">
+                            <div class="col-span-5">
+                                <input type="text" wire:model.live="expenses.{{ $idx }}.description"
+                                    placeholder="e.g. Bus hire"
+                                    class="w-full px-3 py-2 text-xs border border-stone-200 rounded-lg bg-white text-stone-900 font-medium
+                                           focus:outline-none focus:ring-1 focus:ring-green-600/20 focus:border-green-600 placeholder:text-stone-300"/>
+                            </div>
+                            <div class="col-span-3">
+                                <select wire:model="expenses.{{ $idx }}.category"
+                                    class="w-full px-2 py-2 text-xs border border-stone-200 rounded-lg bg-white text-stone-700
+                                           focus:outline-none focus:border-green-600 appearance-none">
+                                    @foreach(['transport'=>'Transport','permits'=>'Permits','equipment'=>'Equipment','refreshments'=>'Food','marketing'=>'Marketing','other'=>'Other'] as $v=>$l)
+                                    <option value="{{ $v }}">{{ $l }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-span-3">
+                                <div class="relative">
+                                    <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-stone-400 text-xs">R</span>
+                                    <input type="number" wire:model.live="expenses.{{ $idx }}.amount"
+                                        placeholder="0" step="0.01" min="0"
+                                        class="w-full pl-6 pr-2 py-2 text-xs border border-stone-200 rounded-lg bg-white text-stone-900 font-semibold
+                                               focus:outline-none focus:ring-1 focus:ring-green-600/20 focus:border-green-600"/>
+                                </div>
+                            </div>
+                            <div class="col-span-1 flex justify-center">
+                                <button type="button" wire:click="removeExpense({{ $idx }})"
+                                    class="text-stone-300 hover:text-red-400 transition-colors text-sm">✕</button>
+                            </div>
+                        </div>
+                        @empty
+                        <div class="py-6 text-center border-2 border-dashed border-stone-200 rounded-xl">
+                            <p class="text-xs text-stone-400">No expenses yet</p>
+                            <p class="text-[10px] text-stone-300 mt-0.5">Add costs to get an accurate price</p>
+                        </div>
+                        @endforelse
+
+                        {{-- Total --}}
+                        <div class="flex justify-end items-center gap-3 pt-3 mt-1 border-t border-stone-100">
+                            <span class="text-xs text-stone-400 uppercase tracking-wide font-semibold">Total expenses</span>
+                            <span class="text-base font-bold text-stone-900">R{{ number_format($this->totalExpenses, 2) }}</span>
+                        </div>
+
+                        {{-- Margin + manual price --}}
+                        <div class="mt-5 space-y-3">
+                            <div class="flex items-center gap-4">
+                                <div class="flex-1">
+                                    <label class="block text-[10px] font-bold uppercase tracking-[0.15em] text-stone-400 mb-1.5">
+                                        Profit margin target
+                                    </label>
+                                    <div class="flex items-center gap-2">
+                                        <input type="range" wire:model.live="targetMarginPct" min="0" max="150" step="5"
+                                            class="flex-1 accent-green-700"/>
+                                        <span class="text-sm font-bold text-stone-800 w-12 text-right">{{ $targetMarginPct }}%</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="flex items-center gap-3">
+                                <button type="button" wire:click="$toggle('useManualPrice')"
+                                    class="relative w-10 h-5 rounded-full transition-all flex-shrink-0
+                                           {{ $useManualPrice ? 'bg-green-600' : 'bg-stone-300' }}">
+                                    <span class="absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-all
+                                                 {{ $useManualPrice ? 'right-0.5' : 'left-0.5' }}"></span>
+                                </button>
+                                <label class="text-xs text-stone-600 font-medium cursor-pointer" wire:click="$toggle('useManualPrice')">
+                                    Set ticket price manually
+                                </label>
+                                @if($useManualPrice)
+                                <div class="relative ml-2">
+                                    <span class="absolute left-3 top-1/2 -translate-y-1/2 text-stone-500 text-sm font-semibold">R</span>
+                                    <input type="number" wire:model.live="price" min="0" step="0.01"
+                                        class="pl-7 pr-3 py-2 w-28 border border-green-400 rounded-lg bg-white text-stone-900 font-bold text-sm
+                                               focus:outline-none focus:ring-2 focus:ring-green-600/20 focus:border-green-700"/>
+                                </div>
+                                @error('price') <p class="text-xs text-red-500 ml-2">{{ $message }}</p> @enderror
+                                @endif
+                            </div>
+                        </div>
                     </div>
-                    @endforeach
-                    <div class="flex justify-between font-bold text-stone-800 border-t border-stone-200 pt-1 mt-1">
-                        <span>Total</span>
-                        <span>R{{ number_format($p->totalExpenses(), 2) }}</span>
+
+                    {{-- Right: live calculator panel --}}
+                    <div class="w-52 flex-shrink-0 rounded-2xl flex flex-col" style="background: #0d1e13;">
+                        <div class="px-4 py-4" style="border-bottom: 1px solid rgba(201,168,76,0.15);">
+                            <p class="text-[9px] font-bold uppercase tracking-[0.2em]" style="color: #c9a84c;">Pricing Calculator</p>
+                        </div>
+
+                        <div class="flex-1 px-4 py-4 space-y-4">
+                            {{-- Break even --}}
+                            <div>
+                                <p class="text-[9px] uppercase tracking-widest font-bold mb-1" style="color: #4a6a52;">Break-even price</p>
+                                <p class="text-2xl font-bold" style="color: #f5f0e8;">R{{ number_format($this->breakEvenPrice, 2) }}</p>
+                                <p class="text-[10px] mt-0.5" style="color: #3d5545;">at min {{ $minCapacity }} people</p>
+                            </div>
+
+                            <div style="height:1px; background: rgba(201,168,76,0.12);"></div>
+
+                            {{-- Suggested --}}
+                            <div>
+                                <p class="text-[9px] uppercase tracking-widest font-bold mb-1" style="color: #4a6a52;">Suggested price</p>
+                                <p class="text-3xl font-bold" style="color: #c9a84c;">R{{ number_format($this->suggestedPrice, 2) }}</p>
+                                <p class="text-[10px] mt-0.5" style="color: #3d5545;">+{{ $targetMarginPct }}% margin</p>
+                            </div>
+
+                            @if($useManualPrice && $price !== '')
+                            <div class="px-3 py-2 rounded-lg" style="background: rgba(201,168,76,0.1); border: 1px solid rgba(201,168,76,0.25);">
+                                <p class="text-[9px] uppercase tracking-widest font-bold mb-0.5" style="color: #c9a84c;">Your price</p>
+                                <p class="text-xl font-bold" style="color: #e8d08a;">R{{ number_format((float)$price, 2) }}</p>
+                            </div>
+                            @endif
+
+                            <div style="height:1px; background: rgba(201,168,76,0.12);"></div>
+
+                            {{-- Revenue forecast --}}
+                            <div>
+                                <p class="text-[9px] uppercase tracking-widest font-bold mb-2" style="color: #4a6a52;">Forecast @ R{{ number_format($this->effectivePrice, 0) }}</p>
+                                @foreach($this->revenueForecast as $scenario => $data)
+                                @php $positive = $data['profit'] >= 0; @endphp
+                                <div class="flex items-center justify-between mb-1.5">
+                                    <div>
+                                        <span class="text-[9px] uppercase font-bold {{ $scenario === 'expected' ? '' : '' }}" style="color: {{ $scenario === 'expected' ? '#c9a84c' : '#4a5e4e' }};">
+                                            {{ ucfirst($scenario) }}
+                                        </span>
+                                        <span class="text-[9px] ml-1" style="color: #3a5040;">{{ $data['headcount'] }}p</span>
+                                    </div>
+                                    <span class="text-xs font-bold {{ $positive ? '' : 'text-red-400' }}" style="{{ $positive ? 'color: #6db98a;' : '' }}">
+                                        {{ $positive ? '+' : '-' }}R{{ number_format(abs($data['profit']), 0) }}
+                                    </span>
+                                </div>
+                                @endforeach
+                            </div>
+                        </div>
                     </div>
+
+                </div>
+
+                {{-- ─── STEP 5: Review & Publish ───────────────── --}}
+                @elseif($step === 5)
+                @php $p = $plan; @endphp
+                @if($p)
+                <div class="max-w-xl space-y-4">
+
+                    {{-- Title + type --}}
+                    <div class="p-4 rounded-xl" style="background: #0d1e13;">
+                        <div class="flex items-start gap-3">
+                            <div class="w-10 h-10 rounded-xl flex-shrink-0"
+                                style="background: {{ $p->cover_color }}"></div>
+                            <div>
+                                <p class="font-bold text-white text-lg leading-tight">{{ $p->title }}</p>
+                                @if($p->tagline)<p class="text-sm italic mt-0.5" style="color: #c9a84c;">{{ $p->tagline }}</p>@endif
+                                <p class="text-xs mt-1 capitalize" style="color: #5a7060;">{{ str_replace('_',' ',$p->type) }}  &bull;  {{ ucfirst($p->difficulty ?? 'moderate') }}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Info grid --}}
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="p-3.5 rounded-xl bg-stone-50 border border-stone-100">
+                            <p class="text-[9px] font-bold uppercase tracking-widest text-stone-400 mb-1.5">📅 Date &amp; Time</p>
+                            <p class="text-sm font-semibold text-stone-800">{{ $p->departs_at?->format('D, d M Y') ?? '—' }}</p>
+                            @if($p->departs_at)<p class="text-xs text-stone-500 mt-0.5">{{ $p->departs_at->format('H:i') }}{{ $p->returns_at ? ' – '.$p->returns_at->format('H:i') : '' }}</p>@endif
+                        </div>
+                        <div class="p-3.5 rounded-xl bg-stone-50 border border-stone-100">
+                            <p class="text-[9px] font-bold uppercase tracking-widest text-stone-400 mb-1.5">📍 Location</p>
+                            <p class="text-sm font-semibold text-stone-800">{{ $p->location ?? '—' }}</p>
+                            @if($p->trail_name)<p class="text-xs text-stone-500 mt-0.5">{{ $p->trail_name }}</p>@endif
+                        </div>
+                        <div class="p-3.5 rounded-xl bg-stone-50 border border-stone-100">
+                            <p class="text-[9px] font-bold uppercase tracking-widest text-stone-400 mb-1.5">👥 Capacity</p>
+                            <p class="text-sm font-semibold text-stone-800">{{ $p->min_capacity }}–{{ $p->max_capacity }} people</p>
+                            @if($p->meeting_point)<p class="text-xs text-stone-500 mt-0.5">Meet: {{ $p->meeting_point }}</p>@endif
+                        </div>
+                        <div class="p-3.5 rounded-xl border" style="background: rgba(201,168,76,0.06); border-color: rgba(201,168,76,0.3);">
+                            <p class="text-[9px] font-bold uppercase tracking-widest mb-1.5" style="color: #c9a84c;">💰 Ticket Price</p>
+                            <p class="text-xl font-bold" style="color: #0d2117;">R{{ number_format($p->price ?? $p->suggestedPrice(), 2) }}</p>
+                            @if($p->includes_transport)<p class="text-xs text-amber-700 mt-0.5">+ R{{ number_format($p->transport_fee,2) }} transport</p>@endif
+                        </div>
+                    </div>
+
+                    {{-- Expenses summary --}}
+                    @if(!empty($p->expenses))
+                    <div class="p-3.5 rounded-xl bg-stone-50 border border-stone-100">
+                        <p class="text-[9px] font-bold uppercase tracking-widest text-stone-400 mb-2">Expenses</p>
+                        @foreach($p->expenses as $e)
+                        <div class="flex justify-between text-xs py-0.5 text-stone-600">
+                            <span>{{ $e['description'] }}</span>
+                            <span class="font-medium">R{{ number_format($e['amount'], 2) }}</span>
+                        </div>
+                        @endforeach
+                        <div class="flex justify-between font-bold text-xs border-t border-stone-200 pt-1.5 mt-1.5 text-stone-900">
+                            <span>Total</span><span>R{{ number_format($p->totalExpenses(), 2) }}</span>
+                        </div>
+                    </div>
+                    @endif
+
+                    @error('publish') <p class="text-sm text-red-500 p-3 bg-red-50 rounded-xl">{{ $message }}</p> @enderror
+
+                    {{-- Publish button --}}
+                    <button
+                        wire:click="publish"
+                        wire:confirm="Publish this event? It will go live immediately and bookings will open."
+                        wire:loading.attr="disabled"
+                        class="w-full py-4 rounded-xl font-bold text-base tracking-wide transition-all
+                               bg-green-700 hover:bg-green-800 active:scale-[0.99] text-white disabled:opacity-60 shadow-lg shadow-green-900/20"
+                    >
+                        <span wire:loading.remove>🚀 &nbsp; Publish Event</span>
+                        <span wire:loading>Publishing&hellip;</span>
+                    </button>
+                    <p class="text-center text-xs text-stone-400">The event will be visible to members immediately.</p>
+
+                </div>
+                @else
+                <div class="text-center py-12 text-stone-400">
+                    <p class="text-sm">Complete the previous steps to unlock the review.</p>
                 </div>
                 @endif
 
-                @if($p->includes_transport && !empty($p->transport_pickup_points))
-                <div class="p-4 bg-amber-50 rounded-xl border border-amber-200">
-                    <p class="text-xs font-semibold text-stone-500 uppercase tracking-wide mb-2">Pick-up Points</p>
-                    @foreach($p->transport_pickup_points as $pp)
-                    <div class="flex justify-between text-stone-600 py-0.5">
-                        <span>{{ $pp['name'] }}</span>
-                        <span>{{ $pp['departure_time'] }} &bull; {{ $pp['max_seats'] }} seats</span>
-                    </div>
-                    @endforeach
-                </div>
                 @endif
+                {{-- /step content --}}
 
-                @error('publish') <p class="text-sm text-red-600 mt-2">{{ $message }}</p> @enderror
+            </div>{{-- /step content area --}}
 
+            {{-- ── NAV BUTTONS ── --}}
+            <div class="px-8 py-4 border-t border-stone-100 flex items-center justify-between bg-stone-50/50">
                 <button
-                    wire:click="publish"
-                    wire:confirm="Publish this event? It will go live immediately."
-                    wire:loading.attr="disabled"
-                    class="w-full bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white font-bold py-3.5 rounded-xl transition-colors text-base"
+                    wire:click="previousStep"
+                    class="{{ $step === 1 ? 'invisible' : '' }} flex items-center gap-2 text-sm font-semibold text-stone-500 hover:text-stone-800 px-4 py-2 rounded-xl hover:bg-stone-200/60 transition-all"
                 >
-                    <span wire:loading.remove>🚀 Publish Event</span>
-                    <span wire:loading>Publishing&hellip;</span>
+                    &#8592; Back
                 </button>
+
+                @if($step < 5)
+                <button
+                    wire:click="nextStep"
+                    wire:loading.attr="disabled"
+                    class="flex items-center gap-2 text-sm font-semibold text-white bg-green-700 hover:bg-green-800 px-6 py-2.5 rounded-xl transition-all shadow-sm disabled:opacity-60"
+                >
+                    <span wire:loading.remove>Save &amp; Continue &#8594;</span>
+                    <span wire:loading>Saving&hellip;</span>
+                </button>
+                @endif
             </div>
-            @else
-            <p class="text-stone-500 text-sm">Save the previous steps to unlock the review.</p>
-            @endif
-        </div>
-        @endif
 
-    </div>{{-- /panel --}}
+        </div>{{-- /right panel --}}
 
-    {{-- Navigation buttons --}}
-    <div class="flex justify-between mt-5">
-        <button
-            wire:click="previousStep"
-            class="{{ $step === 1 ? 'invisible' : '' }} flex items-center gap-2 text-sm text-stone-600 hover:text-stone-800 px-4 py-2.5 rounded-xl hover:bg-white transition-colors"
-        >
-            &larr; Back
-        </button>
-
-        @if($step < 5)
-        <button
-            wire:click="nextStep"
-            wire:loading.attr="disabled"
-            class="bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white font-semibold px-6 py-2.5 rounded-xl transition-colors"
-        >
-            <span wire:loading.remove>Save &amp; Continue &rarr;</span>
-            <span wire:loading>Saving&hellip;</span>
-        </button>
-        @endif
-    </div>
-
+    </div>{{-- /two-panel --}}
 </div>
