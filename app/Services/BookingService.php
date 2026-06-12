@@ -19,22 +19,32 @@ class BookingService
 
     /**
      * Create a draft booking for a member on a hike.
+     * package: 'day' | 'stay' | 'full'
      */
-    public function createDraft(Member $member, Hike $hike, int $spots = 1): Booking
+    public function createDraft(Member $member, Hike $hike, int $spots = 1, string $package = 'day'): Booking
     {
-        return DB::transaction(function () use ($member, $hike, $spots) {
-            $discount = $member->explorerLevel?->discount_percentage ?? 0;
+        return DB::transaction(function () use ($member, $hike, $spots, $package) {
+            $discount  = $member->explorerLevel?->discount_percentage ?? 0;
             $baseAmount = $hike->price * $spots;
             $discountAmount = round($baseAmount * ($discount / 100), 2);
-            $amountDue = $baseAmount - $discountAmount;
+            $ticketFee = $baseAmount - $discountAmount;
+
+            $accommodationFee = 0.0;
+            if (in_array($package, ['stay', 'full']) && ($hike->nights ?? 0) > 0) {
+                $accommodationFee = round((float) $hike->accommodation_cost_per_person * $hike->nights * $spots, 2);
+            }
+
+            $amountDue = $ticketFee + $accommodationFee;
 
             return Booking::create([
-                'member_id'        => $member->id,
-                'hike_id'          => $hike->id,
-                'status'           => Booking::STATUS_DRAFT,
-                'spots'            => $spots,
-                'amount_due'       => $amountDue,
-                'discount_applied' => $discountAmount,
+                'member_id'                 => $member->id,
+                'hike_id'                   => $hike->id,
+                'status'                    => Booking::STATUS_DRAFT,
+                'package'                   => $package,
+                'spots'                     => $spots,
+                'amount_due'                => $amountDue,
+                'discount_applied'          => $discountAmount,
+                'accommodation_fee_applied' => $accommodationFee,
             ]);
         });
     }
