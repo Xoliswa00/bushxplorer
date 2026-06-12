@@ -17,6 +17,8 @@ class EventPlan extends Model
         'location', 'trail_name', 'difficulty', 'departs_at', 'returns_at', 'meeting_point',
         'max_capacity', 'min_capacity', 'points_awarded', 'includes_transport',
         'transport_fee', 'transport_pickup_points',
+        'nights', 'accommodation_name', 'accommodation_cost_per_person',
+        'what_is_included', 'what_to_bring',
         'expenses', 'target_margin_pct', 'price',
         'current_step', 'status', 'published_hike_id', 'notes',
     ];
