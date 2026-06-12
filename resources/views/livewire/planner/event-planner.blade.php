@@ -341,7 +341,7 @@ $stepMeta = [
                         </div>
                     </div>
 
-                    {{-- Transport toggle --}}
+                    {{-- ── Transport toggle ── --}}
                     <div class="rounded-xl overflow-hidden border {{ $includesTransport ? 'border-amber-300' : 'border-stone-200' }} transition-colors">
                         <button type="button" wire:click="$set('includesTransport', {{ $includesTransport ? 'false' : 'true' }})"
                             class="w-full flex items-center justify-between p-4 text-left transition-colors
@@ -420,6 +420,104 @@ $stepMeta = [
                         @endif
                     </div>
 
+                    {{-- ── Accommodation toggle ── --}}
+                    <div class="rounded-xl overflow-hidden border {{ $includesAccommodation ? 'border-indigo-300' : 'border-stone-200' }} transition-colors">
+                        <button type="button" wire:click="$set('includesAccommodation', {{ $includesAccommodation ? 'false' : 'true' }})"
+                            class="w-full flex items-center justify-between p-4 text-left transition-colors
+                                   {{ $includesAccommodation ? 'bg-indigo-50' : 'bg-stone-50 hover:bg-stone-100' }}">
+                            <div class="flex items-center gap-3">
+                                <div class="w-9 h-9 rounded-xl flex items-center justify-center text-lg
+                                            {{ $includesAccommodation ? 'bg-indigo-100' : 'bg-stone-200' }}">🛏</div>
+                                <div>
+                                    <p class="text-sm font-semibold text-stone-800">Include overnight accommodation</p>
+                                    <p class="text-xs text-stone-400 mt-0.5">Weekend or multi-day trip — lodge/camp cost added per person</p>
+                                </div>
+                            </div>
+                            <div class="w-12 h-6 rounded-full flex items-center transition-all flex-shrink-0
+                                        {{ $includesAccommodation ? 'bg-indigo-500 justify-end pr-0.5' : 'bg-stone-300 justify-start pl-0.5' }}">
+                                <div class="w-5 h-5 rounded-full bg-white shadow-sm"></div>
+                            </div>
+                        </button>
+
+                        @if($includesAccommodation)
+                        <div class="p-4 border-t border-indigo-100 bg-white space-y-4">
+
+                            {{-- Nights + cost row --}}
+                            <div class="flex items-end gap-4">
+                                <div>
+                                    <label class="block text-[10px] font-bold uppercase tracking-[0.15em] text-stone-400 mb-1.5">
+                                        Number of nights
+                                    </label>
+                                    <div class="flex items-center gap-2">
+                                        <button type="button" wire:click="$set('nights', max(1, nights - 1))"
+                                            class="w-8 h-8 rounded-lg bg-stone-100 hover:bg-stone-200 text-stone-600 font-bold text-base flex items-center justify-center transition-colors">−</button>
+                                        <span class="w-8 text-center font-bold text-stone-900 text-lg">{{ $nights }}</span>
+                                        <button type="button" wire:click="$set('nights', nights + 1)"
+                                            class="w-8 h-8 rounded-lg bg-stone-100 hover:bg-stone-200 text-stone-600 font-bold text-base flex items-center justify-center transition-colors">+</button>
+                                    </div>
+                                    @error('nights') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
+                                </div>
+                                <div class="flex-1">
+                                    <label class="block text-[10px] font-bold uppercase tracking-[0.15em] text-stone-400 mb-1.5">
+                                        Accommodation cost per person / night (R)
+                                    </label>
+                                    <div class="relative w-40">
+                                        <span class="absolute left-4 top-1/2 -translate-y-1/2 text-stone-400 font-semibold text-sm">R</span>
+                                        <input type="number" wire:model="accommodationCostPerPerson" min="0" step="0.01"
+                                            class="w-full pl-8 pr-4 py-3 border border-stone-200 rounded-xl text-stone-900 font-bold text-center bg-white
+                                                   focus:outline-none focus:ring-2 focus:ring-indigo-400/30 focus:border-indigo-400 transition-colors"/>
+                                    </div>
+                                    @error('accommodationCostPerPerson') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
+                                </div>
+                                @if((float)$accommodationCostPerPerson > 0)
+                                <div class="pb-1">
+                                    <p class="text-[10px] text-stone-400 uppercase tracking-wide font-bold">Total / person</p>
+                                    <p class="text-lg font-bold text-indigo-700">R{{ number_format((float)$accommodationCostPerPerson * $nights, 2) }}</p>
+                                    <p class="text-[10px] text-stone-400">{{ $nights }} night{{ $nights > 1 ? 's' : '' }}</p>
+                                </div>
+                                @endif
+                            </div>
+
+                            {{-- Lodge name --}}
+                            <div>
+                                <label class="block text-[10px] font-bold uppercase tracking-[0.15em] text-stone-400 mb-1.5">
+                                    Accommodation name / venue
+                                </label>
+                                <input type="text" wire:model="accommodationName"
+                                    placeholder="e.g. Magalies Mountain Lodge, Camp Shongwe"
+                                    class="w-full px-4 py-3 border border-stone-200 rounded-xl text-stone-900 font-medium text-sm bg-white
+                                           focus:outline-none focus:ring-2 focus:ring-indigo-400/20 focus:border-indigo-400
+                                           placeholder:text-stone-300 transition-colors"/>
+                            </div>
+
+                            {{-- What is included / What to bring --}}
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-[10px] font-bold uppercase tracking-[0.15em] text-stone-400 mb-1.5">
+                                        What's included
+                                    </label>
+                                    <textarea wire:model="whatIsIncluded" rows="3"
+                                        placeholder="e.g. 2 nights accommodation, Friday dinner, Saturday breakfast &amp; lunch, guided hike"
+                                        class="w-full px-3 py-2.5 border border-stone-200 rounded-xl text-stone-900 text-xs bg-white resize-none
+                                               focus:outline-none focus:ring-2 focus:ring-indigo-400/20 focus:border-indigo-400
+                                               placeholder:text-stone-300 transition-colors"></textarea>
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-bold uppercase tracking-[0.15em] text-stone-400 mb-1.5">
+                                        What to bring
+                                    </label>
+                                    <textarea wire:model="whatToBring" rows="3"
+                                        placeholder="e.g. Sleeping bag, toiletries, torch, snacks, change of clothes"
+                                        class="w-full px-3 py-2.5 border border-stone-200 rounded-xl text-stone-900 text-xs bg-white resize-none
+                                               focus:outline-none focus:ring-2 focus:ring-indigo-400/20 focus:border-indigo-400
+                                               placeholder:text-stone-300 transition-colors"></textarea>
+                                </div>
+                            </div>
+
+                        </div>
+                        @endif
+                    </div>
+
                 </div>
 
                 {{-- ─── STEP 4: Financials ─────────────────────── --}}
@@ -448,7 +546,7 @@ $stepMeta = [
                                 <select wire:model="expenses.{{ $idx }}.category"
                                     class="w-full px-2 py-2 text-xs border border-stone-200 rounded-lg bg-white text-stone-700
                                            focus:outline-none focus:border-green-600 appearance-none">
-                                    @foreach(['transport'=>'Transport','permits'=>'Permits','equipment'=>'Equipment','refreshments'=>'Food','marketing'=>'Marketing','other'=>'Other'] as $v=>$l)
+                                    @foreach(['transport'=>'Transport','permits'=>'Permits','equipment'=>'Equipment','refreshments'=>'Food','accommodation'=>'Accommodation','marketing'=>'Marketing','other'=>'Other'] as $v=>$l)
                                     <option value="{{ $v }}">{{ $l }}</option>
                                     @endforeach
                                 </select>
@@ -610,11 +708,22 @@ $stepMeta = [
                             @if($p->meeting_point)<p class="text-xs text-stone-500 mt-0.5">Meet: {{ $p->meeting_point }}</p>@endif
                         </div>
                         <div class="p-3.5 rounded-xl border" style="background: rgba(201,168,76,0.06); border-color: rgba(201,168,76,0.3);">
-                            <p class="text-[9px] font-bold uppercase tracking-widest mb-1.5" style="color: #c9a84c;">💰 Ticket Price</p>
+                            <p class="text-[9px] font-bold uppercase tracking-widest mb-1.5" style="color: #c9a84c;">💰 Pricing</p>
                             <p class="text-xl font-bold" style="color: #0d2117;">R{{ number_format($p->price ?? $p->suggestedPrice(), 2) }}</p>
                             @if($p->includes_transport)<p class="text-xs text-amber-700 mt-0.5">+ R{{ number_format($p->transport_fee,2) }} transport</p>@endif
+                            @if(($p->nights ?? 0) > 0)<p class="text-xs text-indigo-600 mt-0.5">+ R{{ number_format($p->accommodation_cost_per_person,2) }} × {{ $p->nights }} night{{ $p->nights > 1 ? 's' : '' }} accommodation</p>@endif
                         </div>
                     </div>
+
+                    {{-- Accommodation summary --}}
+                    @if(($p->nights ?? 0) > 0)
+                    <div class="p-3.5 rounded-xl border border-indigo-100" style="background: rgba(99,102,241,0.04);">
+                        <p class="text-[9px] font-bold uppercase tracking-widest text-indigo-400 mb-2">🛏 Overnight — {{ $p->nights }} night{{ $p->nights > 1 ? 's' : '' }}</p>
+                        @if($p->accommodation_name)<p class="text-sm font-semibold text-stone-800">{{ $p->accommodation_name }}</p>@endif
+                        @if($p->what_is_included)<p class="text-xs text-stone-500 mt-1">{{ $p->what_is_included }}</p>@endif
+                        @if($p->what_to_bring)<p class="text-xs text-stone-400 mt-1"><span class="font-semibold text-stone-500">Bring:</span> {{ $p->what_to_bring }}</p>@endif
+                    </div>
+                    @endif
 
                     {{-- Expenses summary --}}
                     @if(!empty($p->expenses))

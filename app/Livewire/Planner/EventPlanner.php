@@ -29,13 +29,19 @@ class EventPlanner extends Component
     public string  $returnsAt    = '';
     public string  $meetingPoint = '';
 
-    // ── Step 3: Capacity & Transport ─────────────────────────────────────────
-    public int    $maxCapacity       = 20;
-    public int    $minCapacity       = 5;
-    public int    $pointsAwarded     = 10;
-    public bool   $includesTransport = false;
-    public string $transportFee      = '0';
-    public array  $pickupPoints      = [];
+    // ── Step 3: Capacity, Transport & Accommodation ──────────────────────────
+    public int    $maxCapacity                = 20;
+    public int    $minCapacity                = 5;
+    public int    $pointsAwarded              = 10;
+    public bool   $includesTransport          = false;
+    public string $transportFee               = '0';
+    public array  $pickupPoints               = [];
+    public bool   $includesAccommodation      = false;
+    public int    $nights                     = 1;
+    public string $accommodationName          = '';
+    public string $accommodationCostPerPerson = '0';
+    public string $whatIsIncluded             = '';
+    public string $whatToBring                = '';
 
     // ── Step 4: Financials ───────────────────────────────────────────────────
     public array  $expenses          = [];
@@ -75,12 +81,18 @@ class EventPlanner extends Component
         $this->meetingPoint = $plan->meeting_point ?? '';
 
         // Step 3
-        $this->maxCapacity       = $plan->max_capacity ?? 20;
-        $this->minCapacity       = $plan->min_capacity ?? 5;
-        $this->pointsAwarded     = $plan->points_awarded ?? 10;
-        $this->includesTransport = $plan->includes_transport ?? false;
-        $this->transportFee      = (string) ($plan->transport_fee ?? '0');
-        $this->pickupPoints      = $plan->transport_pickup_points ?? [];
+        $this->maxCapacity                = $plan->max_capacity ?? 20;
+        $this->minCapacity                = $plan->min_capacity ?? 5;
+        $this->pointsAwarded              = $plan->points_awarded ?? 10;
+        $this->includesTransport          = $plan->includes_transport ?? false;
+        $this->transportFee               = (string) ($plan->transport_fee ?? '0');
+        $this->pickupPoints               = $plan->transport_pickup_points ?? [];
+        $this->includesAccommodation      = ($plan->nights ?? 0) > 0;
+        $this->nights                     = (int) ($plan->nights ?? 1);
+        $this->accommodationName          = $plan->accommodation_name ?? '';
+        $this->accommodationCostPerPerson = (string) ($plan->accommodation_cost_per_person ?? '0');
+        $this->whatIsIncluded             = $plan->what_is_included ?? '';
+        $this->whatToBring                = $plan->what_to_bring ?? '';
 
         // Step 4
         $this->expenses        = $plan->expenses ?? [];
@@ -247,9 +259,11 @@ class EventPlanner extends Component
                 'difficulty' => ['required', 'in:easy,moderate,hard,extreme'],
             ]),
             3 => $this->validate([
-                'maxCapacity' => ['required', 'integer', 'min:2'],
-                'minCapacity' => ['required', 'integer', 'min:1', 'lte:maxCapacity'],
-                'transportFee' => $this->includesTransport ? ['required', 'numeric', 'min:0'] : [],
+                'maxCapacity'                => ['required', 'integer', 'min:2'],
+                'minCapacity'                => ['required', 'integer', 'min:1', 'lte:maxCapacity'],
+                'transportFee'               => $this->includesTransport ? ['required', 'numeric', 'min:0'] : [],
+                'nights'                     => $this->includesAccommodation ? ['required', 'integer', 'min:1'] : [],
+                'accommodationCostPerPerson' => $this->includesAccommodation ? ['required', 'numeric', 'min:0'] : [],
             ]),
             4 => $this->validate([
                 'targetMarginPct' => ['required', 'numeric', 'min:0', 'max:300'],
@@ -281,12 +295,17 @@ class EventPlanner extends Component
                 'meeting_point' => $this->meetingPoint,
             ],
             3 => [
-                'max_capacity'            => $this->maxCapacity,
-                'min_capacity'            => $this->minCapacity,
-                'points_awarded'          => $this->pointsAwarded,
-                'includes_transport'      => $this->includesTransport,
-                'transport_fee'           => $this->includesTransport ? $this->transportFee : 0,
-                'transport_pickup_points' => $this->includesTransport ? $this->pickupPoints : [],
+                'max_capacity'                 => $this->maxCapacity,
+                'min_capacity'                 => $this->minCapacity,
+                'points_awarded'               => $this->pointsAwarded,
+                'includes_transport'           => $this->includesTransport,
+                'transport_fee'                => $this->includesTransport ? $this->transportFee : 0,
+                'transport_pickup_points'      => $this->includesTransport ? $this->pickupPoints : [],
+                'nights'                       => $this->includesAccommodation ? max(1, $this->nights) : 0,
+                'accommodation_name'           => $this->includesAccommodation ? $this->accommodationName : null,
+                'accommodation_cost_per_person'=> $this->includesAccommodation ? $this->accommodationCostPerPerson : 0,
+                'what_is_included'             => $this->whatIsIncluded ?: null,
+                'what_to_bring'                => $this->whatToBring ?: null,
             ],
             4 => [
                 'expenses'          => $this->expenses,

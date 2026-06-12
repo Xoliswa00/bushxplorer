@@ -289,15 +289,22 @@
             margin-top: 2px;
         }
 
-        /* Transport section */
+        /* Transport & Accommodation sections */
         .transport-box {
             border: 1px solid rgba(201,168,76,.3);
             border-radius: 10px;
             padding: 14px 16px;
-            margin-bottom: 22px;
+            margin-bottom: 16px;
             background: rgba(201,168,76,.04);
         }
-        .transport-box__header {
+        .accom-box {
+            border: 1px solid rgba(120,110,200,.35);
+            border-radius: 10px;
+            padding: 14px 16px;
+            margin-bottom: 16px;
+            background: rgba(99,80,180,.06);
+        }
+        .transport-box__header, .accom-box__header {
             display: flex;
             align-items: center;
             gap: 8px;
@@ -309,6 +316,34 @@
             letter-spacing: 2px;
             color: var(--gold);
             text-transform: uppercase;
+        }
+        .accom-box__title {
+            font-family: 'Cinzel', serif;
+            font-size: 9px;
+            letter-spacing: 2px;
+            color: #9b92e8;
+            text-transform: uppercase;
+        }
+        .accom-box__name {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 17px;
+            font-weight: 600;
+            color: var(--cream);
+            margin-bottom: 6px;
+        }
+        .accom-box__detail {
+            font-size: 11.5px;
+            color: rgba(245,240,232,.65);
+            line-height: 1.6;
+            margin-bottom: 4px;
+        }
+        .accom-box__label {
+            font-family: 'Cinzel', serif;
+            font-size: 8px;
+            letter-spacing: 1.5px;
+            color: #9b92e8;
+            text-transform: uppercase;
+            margin-bottom: 3px;
         }
         .transport-stops { list-style: none; }
         .transport-stops li {
@@ -576,6 +611,7 @@
                     <span class="spec__label">Price</span>
                     <span class="spec__value">R{{ number_format($plan->price ?? $plan->suggestedPrice(), 0) }}</span>
                     @if($plan->includes_transport)<div class="spec__sub">+ R{{ number_format($plan->transport_fee,0) }} transport</div>@endif
+                    @if(($plan->nights ?? 0) > 0)<div class="spec__sub" style="color:#9b92e8;">+ R{{ number_format($plan->accommodation_cost_per_person ?? 0, 0) }} × {{ $plan->nights }}n accom</div>@endif
                 </div>
                 <div class="spec">
                     <span class="spec__label">Points</span>
@@ -599,6 +635,27 @@
                     </li>
                     @endforeach
                 </ul>
+            </div>
+            @endif
+
+            {{-- Accommodation --}}
+            @if(($plan->nights ?? 0) > 0)
+            <div class="accom-box">
+                <div class="accom-box__header">
+                    <span>🛏</span>
+                    <span class="accom-box__title">Overnight &mdash; {{ $plan->nights }} night{{ $plan->nights > 1 ? 's' : '' }} · R{{ number_format(($plan->accommodation_cost_per_person ?? 0) * $plan->nights, 0) }} per person</span>
+                </div>
+                @if($plan->accommodation_name)
+                <div class="accom-box__name">{{ $plan->accommodation_name }}</div>
+                @endif
+                @if($plan->what_is_included)
+                <div class="accom-box__label">What's Included</div>
+                <div class="accom-box__detail">{{ $plan->what_is_included }}</div>
+                @endif
+                @if($plan->what_to_bring)
+                <div class="accom-box__label" style="margin-top:8px;">What to Bring</div>
+                <div class="accom-box__detail">{{ $plan->what_to_bring }}</div>
+                @endif
             </div>
             @endif
 
