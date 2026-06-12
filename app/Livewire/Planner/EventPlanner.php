@@ -2,8 +2,10 @@
 
 namespace App\Livewire\Planner;
 
+use App\Models\Accommodation;
 use App\Models\EventPlan;
 use App\Services\EventPlanService;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
@@ -42,6 +44,8 @@ class EventPlanner extends Component
     public string $accommodationCostPerPerson = '0';
     public string $whatIsIncluded             = '';
     public string $whatToBring                = '';
+    public string $accommodationSearch        = '';
+    public ?int   $selectedAccommodationId    = null;
 
     // ── Step 4: Financials ───────────────────────────────────────────────────
     public array  $expenses          = [];
@@ -93,6 +97,8 @@ class EventPlanner extends Component
         $this->accommodationCostPerPerson = (string) ($plan->accommodation_cost_per_person ?? '0');
         $this->whatIsIncluded             = $plan->what_is_included ?? '';
         $this->whatToBring                = $plan->what_to_bring ?? '';
+        $this->accommodationSearch        = '';
+        $this->selectedAccommodationId    = null;
 
         // Step 4
         $this->expenses        = $plan->expenses ?? [];
@@ -162,6 +168,70 @@ class EventPlanner extends Component
     public function stepLabels(): array
     {
         return EventPlanService::STEPS;
+    }
+
+    #[Computed]
+    public function accommodationSuggestions(): Collection
+    {
+        $query = Accommodation::active();
+
+        $searchTerm = trim($this->accommodationSearch);
+        $locationTerm = trim($this->location);
+
+        if ($searchTerm !== '') {
+            $query->search($searchTerm);
+        } elseif ($locationTerm !== '') {
+            $query->search($locationTerm);
+        }
+
+        return $query->orderBy('avg_cost_per_person')->limit(9)->get();
+    }
+
+    // ── Accommodation selection ───────────────────────────────────────────────
+
+    public function selectAccommodation(int $id): void
+    {
+        $acc = Accommodation::find($id);
+        if (! $acc) return;
+
+        $this->selectedAccommodationId    = $id;
+        $this->accommodationName          = $acc->name;
+        $this->accommodationCostPerPerson = (string) ($acc->avg_cost_per_person ?? '0');
+
+        if ($acc->amenities) {
+            $included = collect($acc->amenities)
+                ->map(fn ($a) => match ($a) {
+                    'breakfast_included' => 'Breakfast included',
+                    'braai'              => 'Braai facilities',
+                    'pool'               => 'Swimming pool',
+                    'wifi'               => 'Wi-Fi',
+                    'hiking_trails'      => 'On-site hiking trails',
+                    'guided_hikes'       => 'Guided hikes available',
+                    'restaurant'         => 'On-site restaurant',
+                    'spa'                => 'Spa & wellness',
+                    'game_viewing'       => 'Game viewing',
+                    'communal_kitchen'   => 'Communal kitchen',
+                    'self_catering'      => 'Self-catering',
+                    default              => str_replace('_', ' ', ucfirst($a)),
+                })
+                ->implode(', ');
+
+            if ($included && empty(trim($this->whatIsIncluded))) {
+                $this->whatIsIncluded = $included;
+            }
+        }
+
+        if ($acc->group_notes && empty(trim($this->whatToBring))) {
+            // group_notes go to the notes area, not to what-to-bring
+        }
+
+        unset($this->accommodationSuggestions);
+    }
+
+    public function clearAccommodationSelection(): void
+    {
+        $this->selectedAccommodationId = null;
+        unset($this->accommodationSuggestions);
     }
 
     // ── Step transitions ─────────────────────────────────────────────────────

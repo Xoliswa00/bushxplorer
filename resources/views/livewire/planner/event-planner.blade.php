@@ -440,80 +440,176 @@ $stepMeta = [
                         </button>
 
                         @if($includesAccommodation)
-                        <div class="p-4 border-t border-indigo-100 bg-white space-y-4">
+                        <div class="border-t border-indigo-100 bg-white">
 
-                            {{-- Nights + cost row --}}
-                            <div class="flex items-end gap-4">
-                                <div>
-                                    <label class="block text-[10px] font-bold uppercase tracking-[0.15em] text-stone-400 mb-1.5">
-                                        Number of nights
-                                    </label>
-                                    <div class="flex items-center gap-2">
-                                        <button type="button" wire:click="$set('nights', max(1, nights - 1))"
-                                            class="w-8 h-8 rounded-lg bg-stone-100 hover:bg-stone-200 text-stone-600 font-bold text-base flex items-center justify-center transition-colors">−</button>
-                                        <span class="w-8 text-center font-bold text-stone-900 text-lg">{{ $nights }}</span>
-                                        <button type="button" wire:click="$set('nights', nights + 1)"
-                                            class="w-8 h-8 rounded-lg bg-stone-100 hover:bg-stone-200 text-stone-600 font-bold text-base flex items-center justify-center transition-colors">+</button>
-                                    </div>
-                                    @error('nights') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
+                            {{-- ── Find accommodation ─────────────────────────── --}}
+                            <div class="p-4 border-b border-stone-100">
+                                <div class="flex items-center justify-between mb-2">
+                                    <p class="text-[10px] font-bold uppercase tracking-[0.15em] text-indigo-500">Find accommodation</p>
+                                    @if($selectedAccommodationId)
+                                    <button type="button" wire:click="clearAccommodationSelection"
+                                        class="text-[10px] text-stone-400 hover:text-red-400 transition-colors">
+                                        ✕ Clear selection
+                                    </button>
+                                    @endif
                                 </div>
-                                <div class="flex-1">
-                                    <label class="block text-[10px] font-bold uppercase tracking-[0.15em] text-stone-400 mb-1.5">
-                                        Accommodation cost per person / night (R)
-                                    </label>
-                                    <div class="relative w-40">
-                                        <span class="absolute left-4 top-1/2 -translate-y-1/2 text-stone-400 font-semibold text-sm">R</span>
-                                        <input type="number" wire:model="accommodationCostPerPerson" min="0" step="0.01"
-                                            class="w-full pl-8 pr-4 py-3 border border-stone-200 rounded-xl text-stone-900 font-bold text-center bg-white
-                                                   focus:outline-none focus:ring-2 focus:ring-indigo-400/30 focus:border-indigo-400 transition-colors"/>
-                                    </div>
-                                    @error('accommodationCostPerPerson') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
+
+                                {{-- Search input --}}
+                                <div class="relative mb-3">
+                                    <span class="absolute left-3 top-1/2 -translate-y-1/2 text-stone-300 text-sm">🔍</span>
+                                    <input type="text" wire:model.live.debounce.300ms="accommodationSearch"
+                                        placeholder="Search by name or area (e.g. Magaliesberg, Drakensberg)…"
+                                        class="w-full pl-9 pr-4 py-2.5 border border-stone-200 rounded-xl text-stone-800 text-xs bg-white
+                                               focus:outline-none focus:ring-2 focus:ring-indigo-400/20 focus:border-indigo-400
+                                               placeholder:text-stone-300 transition-colors"/>
                                 </div>
-                                @if((float)$accommodationCostPerPerson > 0)
-                                <div class="pb-1">
-                                    <p class="text-[10px] text-stone-400 uppercase tracking-wide font-bold">Total / person</p>
-                                    <p class="text-lg font-bold text-indigo-700">R{{ number_format((float)$accommodationCostPerPerson * $nights, 2) }}</p>
-                                    <p class="text-[10px] text-stone-400">{{ $nights }} night{{ $nights > 1 ? 's' : '' }}</p>
+
+                                {{-- Suggestion cards --}}
+                                @if($this->accommodationSuggestions->isNotEmpty())
+                                <div class="grid grid-cols-3 gap-2">
+                                    @foreach($this->accommodationSuggestions as $acc)
+                                    @php $isSelected = $selectedAccommodationId === $acc->id; @endphp
+                                    <button type="button" wire:click="selectAccommodation({{ $acc->id }})"
+                                        wire:key="acc-{{ $acc->id }}"
+                                        class="text-left p-3 rounded-xl border transition-all
+                                               {{ $isSelected
+                                                  ? 'border-indigo-400 bg-indigo-50 shadow-sm shadow-indigo-100'
+                                                  : 'border-stone-200 bg-stone-50 hover:border-indigo-200 hover:bg-indigo-50/40' }}">
+
+                                        <div class="flex items-center justify-between mb-1.5">
+                                            <span class="text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded"
+                                                style="background: {{ $acc->typeColor() }}18; color: {{ $acc->typeColor() }};">
+                                                {{ $acc->typeLabel() }}
+                                            </span>
+                                            @if($isSelected)
+                                            <span class="text-indigo-500 text-xs font-bold">✓</span>
+                                            @endif
+                                        </div>
+
+                                        <p class="text-xs font-semibold text-stone-800 leading-snug mb-0.5">{{ $acc->name }}</p>
+                                        <p class="text-[10px] text-stone-400">{{ $acc->region }}</p>
+
+                                        @if($acc->avg_cost_per_person)
+                                        <p class="text-xs font-bold mt-1.5 {{ $isSelected ? 'text-indigo-600' : 'text-stone-600' }}">
+                                            R{{ number_format($acc->avg_cost_per_person, 0) }}<span class="font-normal text-stone-400">/person</span>
+                                        </p>
+                                        @endif
+
+                                        @if($acc->amenities)
+                                        <div class="flex flex-wrap gap-1 mt-1.5">
+                                            @foreach(array_slice($acc->amenities, 0, 3) as $amenity)
+                                            <span class="text-[8px] px-1.5 py-0.5 rounded bg-stone-100 text-stone-500">
+                                                {{ match($amenity) {
+                                                    'breakfast_included' => '🍳',
+                                                    'pool'               => '🏊',
+                                                    'wifi'               => '📶',
+                                                    'hiking_trails'      => '🥾',
+                                                    'guided_hikes'       => '🧭',
+                                                    'braai'              => '🔥',
+                                                    'spa'                => '💆',
+                                                    'game_viewing'       => '🦁',
+                                                    'restaurant'         => '🍽️',
+                                                    'camping'            => '⛺',
+                                                    default              => '✓',
+                                                } }} {{ str_replace('_', ' ', $amenity) }}
+                                            </span>
+                                            @endforeach
+                                        </div>
+                                        @endif
+
+                                        @if($acc->group_notes)
+                                        <p class="text-[9px] text-indigo-500 mt-1.5 leading-snug">💡 {{ Str::limit($acc->group_notes, 60) }}</p>
+                                        @endif
+                                    </button>
+                                    @endforeach
                                 </div>
+                                @else
+                                <p class="text-xs text-stone-400 italic py-1">
+                                    @if(trim($accommodationSearch) !== '')
+                                        No results for "{{ $accommodationSearch }}" — fill in the details below manually.
+                                    @else
+                                        No spots in our directory for "{{ $location }}" yet — enter details manually below.
+                                    @endif
+                                </p>
                                 @endif
                             </div>
 
-                            {{-- Lodge name --}}
-                            <div>
-                                <label class="block text-[10px] font-bold uppercase tracking-[0.15em] text-stone-400 mb-1.5">
-                                    Accommodation name / venue
-                                </label>
-                                <input type="text" wire:model="accommodationName"
-                                    placeholder="e.g. Magalies Mountain Lodge, Camp Shongwe"
-                                    class="w-full px-4 py-3 border border-stone-200 rounded-xl text-stone-900 font-medium text-sm bg-white
-                                           focus:outline-none focus:ring-2 focus:ring-indigo-400/20 focus:border-indigo-400
-                                           placeholder:text-stone-300 transition-colors"/>
-                            </div>
+                            {{-- ── Manual / confirm fields ─────────────────────── --}}
+                            <div class="p-4 space-y-4">
 
-                            {{-- What is included / What to bring --}}
-                            <div class="grid grid-cols-2 gap-4">
+                                {{-- Nights + cost row --}}
+                                <div class="flex items-end gap-4">
+                                    <div>
+                                        <label class="block text-[10px] font-bold uppercase tracking-[0.15em] text-stone-400 mb-1.5">
+                                            Nights
+                                        </label>
+                                        <div class="flex items-center gap-2">
+                                            <button type="button" wire:click="$set('nights', max(1, nights - 1))"
+                                                class="w-8 h-8 rounded-lg bg-stone-100 hover:bg-stone-200 text-stone-600 font-bold text-base flex items-center justify-center transition-colors">−</button>
+                                            <span class="w-8 text-center font-bold text-stone-900 text-lg">{{ $nights }}</span>
+                                            <button type="button" wire:click="$set('nights', nights + 1)"
+                                                class="w-8 h-8 rounded-lg bg-stone-100 hover:bg-stone-200 text-stone-600 font-bold text-base flex items-center justify-center transition-colors">+</button>
+                                        </div>
+                                        @error('nights') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
+                                    </div>
+                                    <div class="flex-1">
+                                        <label class="block text-[10px] font-bold uppercase tracking-[0.15em] text-stone-400 mb-1.5">
+                                            Cost per person / night (R)
+                                        </label>
+                                        <div class="relative w-40">
+                                            <span class="absolute left-4 top-1/2 -translate-y-1/2 text-stone-400 font-semibold text-sm">R</span>
+                                            <input type="number" wire:model.live="accommodationCostPerPerson" min="0" step="0.01"
+                                                class="w-full pl-8 pr-4 py-3 border border-stone-200 rounded-xl text-stone-900 font-bold text-center bg-white
+                                                       focus:outline-none focus:ring-2 focus:ring-indigo-400/30 focus:border-indigo-400 transition-colors"/>
+                                        </div>
+                                        @error('accommodationCostPerPerson') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
+                                    </div>
+                                    @if((float)$accommodationCostPerPerson > 0)
+                                    <div class="pb-1">
+                                        <p class="text-[10px] text-stone-400 uppercase tracking-wide font-bold">Total / person</p>
+                                        <p class="text-lg font-bold text-indigo-700">R{{ number_format((float)$accommodationCostPerPerson * $nights, 2) }}</p>
+                                        <p class="text-[10px] text-stone-400">{{ $nights }} night{{ $nights > 1 ? 's' : '' }}</p>
+                                    </div>
+                                    @endif
+                                </div>
+
+                                {{-- Venue name --}}
                                 <div>
                                     <label class="block text-[10px] font-bold uppercase tracking-[0.15em] text-stone-400 mb-1.5">
-                                        What's included
+                                        Venue name
                                     </label>
-                                    <textarea wire:model="whatIsIncluded" rows="3"
-                                        placeholder="e.g. 2 nights accommodation, Friday dinner, Saturday breakfast &amp; lunch, guided hike"
-                                        class="w-full px-3 py-2.5 border border-stone-200 rounded-xl text-stone-900 text-xs bg-white resize-none
+                                    <input type="text" wire:model="accommodationName"
+                                        placeholder="e.g. De Hoek Mountain Lodge"
+                                        class="w-full px-4 py-3 border border-stone-200 rounded-xl text-stone-900 font-medium text-sm bg-white
                                                focus:outline-none focus:ring-2 focus:ring-indigo-400/20 focus:border-indigo-400
-                                               placeholder:text-stone-300 transition-colors"></textarea>
+                                               placeholder:text-stone-300 transition-colors"/>
                                 </div>
-                                <div>
-                                    <label class="block text-[10px] font-bold uppercase tracking-[0.15em] text-stone-400 mb-1.5">
-                                        What to bring
-                                    </label>
-                                    <textarea wire:model="whatToBring" rows="3"
-                                        placeholder="e.g. Sleeping bag, toiletries, torch, snacks, change of clothes"
-                                        class="w-full px-3 py-2.5 border border-stone-200 rounded-xl text-stone-900 text-xs bg-white resize-none
-                                               focus:outline-none focus:ring-2 focus:ring-indigo-400/20 focus:border-indigo-400
-                                               placeholder:text-stone-300 transition-colors"></textarea>
-                                </div>
-                            </div>
 
+                                {{-- What's included / What to bring --}}
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-[10px] font-bold uppercase tracking-[0.15em] text-stone-400 mb-1.5">
+                                            What's included
+                                        </label>
+                                        <textarea wire:model="whatIsIncluded" rows="3"
+                                            placeholder="e.g. 2 nights, Friday dinner, guided hike, breakfast"
+                                            class="w-full px-3 py-2.5 border border-stone-200 rounded-xl text-stone-900 text-xs bg-white resize-none
+                                                   focus:outline-none focus:ring-2 focus:ring-indigo-400/20 focus:border-indigo-400
+                                                   placeholder:text-stone-300 transition-colors"></textarea>
+                                    </div>
+                                    <div>
+                                        <label class="block text-[10px] font-bold uppercase tracking-[0.15em] text-stone-400 mb-1.5">
+                                            What to bring
+                                        </label>
+                                        <textarea wire:model="whatToBring" rows="3"
+                                            placeholder="e.g. Sleeping bag, toiletries, torch, snacks"
+                                            class="w-full px-3 py-2.5 border border-stone-200 rounded-xl text-stone-900 text-xs bg-white resize-none
+                                                   focus:outline-none focus:ring-2 focus:ring-indigo-400/20 focus:border-indigo-400
+                                                   placeholder:text-stone-300 transition-colors"></textarea>
+                                    </div>
+                                </div>
+
+                            </div>
                         </div>
                         @endif
                     </div>

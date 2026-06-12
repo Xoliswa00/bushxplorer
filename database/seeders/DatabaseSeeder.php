@@ -21,6 +21,7 @@ class DatabaseSeeder extends Seeder
         ]);
 
         $this->call([
+            AccommodationsSeeder::class,
             HartiesHeritage2026Seeder::class,
         ]);
     }
