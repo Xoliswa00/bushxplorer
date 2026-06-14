@@ -24,6 +24,7 @@ class DatabaseSeeder extends Seeder
             AccommodationsSeeder::class,
             HartiesHeritage2026Seeder::class,
             TwelveFallsCircuit2026Seeder::class,
+            BadgesSeeder::class,
         ]);
     }
 }

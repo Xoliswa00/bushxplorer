@@ -2,8 +2,10 @@
 
 namespace App\Livewire\Member;
 
+use App\Models\Badge;
 use App\Models\ExplorerLevel;
 use App\Models\Member;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
@@ -15,7 +17,7 @@ class MemberDashboard extends Component
     #[Computed]
     public function member(): Member
     {
-        return Member::with(['explorerLevel'])
+        return Member::with(['explorerLevel', 'badges'])
             ->where('user_id', Auth::id())
             ->firstOrFail();
     }
@@ -59,10 +61,34 @@ class MemberDashboard extends Component
 
         if (! $current || ! $next) return 100;
 
-        $range = $next->min_points - $current->min_points;
+        $range  = $next->min_points - $current->min_points;
         $earned = $this->member->total_points - $current->min_points;
 
         return $range > 0 ? (int) min(100, round($earned / $range * 100)) : 100;
+    }
+
+    #[Computed]
+    public function allBadges(): Collection
+    {
+        $earned = $this->member->badges->keyBy('id');
+
+        return Badge::orderBy('sort_order')->get()->map(function (Badge $badge) use ($earned) {
+            $badge->earned     = $earned->has($badge->id);
+            $badge->awarded_at = $earned->get($badge->id)?->pivot?->awarded_at;
+            return $badge;
+        });
+    }
+
+    #[Computed]
+    public function earnedBadgeCount(): int
+    {
+        return $this->member->badges->count();
+    }
+
+    #[Computed]
+    public function recentNotifications(): Collection
+    {
+        return $this->member->notifications()->limit(5)->get();
     }
 
     public function render()

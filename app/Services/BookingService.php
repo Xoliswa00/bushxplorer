@@ -7,6 +7,7 @@ use App\Models\Hike;
 use App\Models\Member;
 use App\Models\MemberNotification;
 use App\Models\Payment;
+use App\Services\BadgeService;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -14,7 +15,8 @@ use Illuminate\Support\Facades\Storage;
 class BookingService
 {
     public function __construct(
-        private readonly ExplorerPointsService $pointsService
+        private readonly ExplorerPointsService $pointsService,
+        private readonly BadgeService $badgeService,
     ) {}
 
     /**
@@ -162,8 +164,11 @@ class BookingService
                 $booking
             );
 
-            $member = $booking->member;
+            $member = $booking->member->refresh();
             $member->increment('hikes_attended');
+            $member->refresh();
+
+            $this->badgeService->checkAndAward($member);
 
             return $booking->refresh();
         });
