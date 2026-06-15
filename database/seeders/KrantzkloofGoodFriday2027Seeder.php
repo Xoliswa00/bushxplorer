@@ -174,6 +174,12 @@ NUMBERS
 15 participants max. 9 minimum to proceed (enough to fill 3 cars and cover costs). Entry fees, guide, Saturday braai, and all trail snacks included in the ticket. Accommodation and fuel pooled as add-ons.
 NOTES,
                 'cover_color'                   => '#1a3c34',
+                'cover_image_url'               => 'https://images.unsplash.com/photo-1448375240586-882707db888b?w=1400&h=600&fit=crop&q=80',
+                'scene_image_urls'              => [
+                    'https://images.unsplash.com/photo-1433086966358-54859d0ed716?w=600&h=400&fit=crop&q=80',
+                    'https://images.unsplash.com/photo-1551632811-561732d1e306?w=600&h=400&fit=crop&q=80',
+                    'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=600&h=400&fit=crop&q=80',
+                ],
 
                 // Step 2 — Logistics
                 'location'                      => 'Kloof, KwaZulu-Natal',

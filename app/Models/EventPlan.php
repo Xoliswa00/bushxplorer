@@ -14,6 +14,7 @@ class EventPlan extends Model
 
     protected $fillable = [
         'created_by', 'title', 'type', 'tagline', 'description', 'concept_notes', 'cover_color',
+        'cover_image_url', 'scene_image_urls',
         'location', 'trail_name', 'difficulty', 'departs_at', 'returns_at', 'meeting_point',
         'max_capacity', 'min_capacity', 'points_awarded', 'includes_transport',
         'transport_fee', 'transport_pickup_points',
@@ -29,6 +30,7 @@ class EventPlan extends Model
         'includes_transport'      => 'boolean',
         'transport_fee'           => 'decimal:2',
         'transport_pickup_points' => 'array',
+        'scene_image_urls'        => 'array',
         'expenses'                => 'array',
         'price'                   => 'decimal:2',
         'target_margin_pct'       => 'decimal:2',
