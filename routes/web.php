@@ -1,5 +1,6 @@
 <?php
 
+use App\Livewire\Admin\AdminDashboard;
 use App\Livewire\Admin\HikeBookings;
 use App\Livewire\Auth\Login;
 use App\Livewire\Auth\Register;
@@ -61,7 +62,8 @@ Route::middleware(['auth'])->prefix('planner')->name('planner.')->group(function
 
 // ── Admin ──────────────────────────────────────────────────────────────────────
 Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
-    Route::get('/gallery', GalleryManager::class)->name('gallery');
-    Route::get('/hikes', fn () => view('admin.hikes'))->name('hikes');
-    Route::get('/hikes/{hike}/bookings', HikeBookings::class)->name('hike.bookings');
+    Route::get('/',                       AdminDashboard::class)->name('dashboard');
+    Route::get('/gallery',                GalleryManager::class)->name('gallery');
+    Route::get('/hikes',        fn () => view('admin.hikes'))->name('hikes');
+    Route::get('/hikes/{hike}/bookings',  HikeBookings::class)->name('hike.bookings');
 });

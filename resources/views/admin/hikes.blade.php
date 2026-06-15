@@ -1,9 +1,14 @@
 <x-layouts.app>
 <div class="max-w-5xl mx-auto space-y-6">
 
-    <div>
-        <p class="text-[10px] font-bold uppercase tracking-[0.2em] mb-1" style="color:#c9a84c;">Admin</p>
-        <h1 class="text-2xl font-bold text-stone-900" style="font-family:'Cormorant Garamond',serif;">Hike Management</h1>
+    <div class="flex items-end justify-between">
+        <div>
+            <p class="text-[10px] font-bold uppercase tracking-[0.2em] mb-1" style="color:#c9a84c;">Admin</p>
+            <h1 class="text-2xl font-bold text-stone-900" style="font-family:'Cormorant Garamond',serif;">Hike Management</h1>
+        </div>
+        <a href="{{ route('admin.dashboard') }}" class="text-sm text-stone-500 hover:text-stone-900 transition-colors px-3 py-1.5 rounded-lg hover:bg-stone-100">
+            ← Dashboard
+        </a>
     </div>
 
     @php

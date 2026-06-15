@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\Mail\BookingConfirmedMail;
+use App\Mail\PaymentRejectedMail;
 use App\Models\Booking;
 use App\Models\Hike;
 use App\Models\Member;
@@ -10,6 +12,7 @@ use App\Models\Payment;
 use App\Services\BadgeService;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 
 class BookingService
@@ -141,6 +144,11 @@ class BookingService
             'data' => ['booking_ref' => $booking->booking_ref, 'hike_id' => $booking->hike_id],
         ]);
 
+        $email = $booking->member->user?->email;
+        if ($email) {
+            Mail::to($email)->send(new BookingConfirmedMail($booking));
+        }
+
         return $booking->refresh();
     }
 
@@ -216,6 +224,11 @@ class BookingService
                 'body' => "Your payment proof for {$booking->booking_ref} was rejected. " . ($reason ?? 'Please re-upload.'),
                 'data' => ['booking_ref' => $booking->booking_ref],
             ]);
+
+            $email = $booking->member->user?->email;
+            if ($email) {
+                Mail::to($email)->send(new PaymentRejectedMail($booking, $reason ?? 'Please re-upload a clear proof of payment.'));
+            }
 
             return $booking->refresh();
         });
