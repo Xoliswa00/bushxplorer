@@ -1,6 +1,6 @@
 @php
 $stepMeta = [
-    1 => ['icon' => '✦', 'sub' => 'Name, type & poster colour'],
+    1 => ['icon' => '✦', 'sub' => 'Name, type, colours & photos'],
     2 => ['icon' => '◎', 'sub' => 'Date, place & difficulty'],
     3 => ['icon' => '◈', 'sub' => 'Headcount & transport'],
     4 => ['icon' => '◉', 'sub' => 'Budget, pricing & forecast'],
@@ -223,6 +223,105 @@ $stepMeta = [
                                 </span>
                             </button>
                             @endforeach
+                        </div>
+                    </div>
+
+                    {{-- ── Trip Photos ── --}}
+                    <div class="rounded-xl border border-stone-200 overflow-hidden">
+                        <div class="px-4 py-3 bg-stone-50 border-b border-stone-100 flex items-center justify-between">
+                            <div>
+                                <p class="text-[10px] font-bold uppercase tracking-[0.15em] text-stone-500">Trip Photos</p>
+                                <p class="text-[10px] text-stone-400 mt-0.5">Paste image URLs — they appear as the hero & scene strip on your poster</p>
+                            </div>
+                            <span class="text-lg">🖼</span>
+                        </div>
+
+                        <div class="p-4 space-y-4 bg-white">
+
+                            {{-- Cover / hero photo --}}
+                            <div>
+                                <label class="block text-[10px] font-bold uppercase tracking-[0.15em] text-stone-400 mb-1.5">
+                                    Hero cover photo
+                                    <span class="normal-case tracking-normal font-normal text-stone-300">— fills the top of the poster</span>
+                                </label>
+                                <div class="flex gap-3 items-start">
+                                    <div class="flex-1">
+                                        <input type="url" wire:model.blur="coverImageUrl"
+                                            placeholder="https://images.unsplash.com/…"
+                                            class="w-full px-3 py-2.5 border border-stone-200 rounded-xl text-stone-800 text-sm bg-white
+                                                   focus:outline-none focus:ring-2 focus:ring-green-600/20 focus:border-green-700
+                                                   placeholder:text-stone-300 transition-colors"/>
+                                        @error('coverImageUrl') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
+                                    </div>
+                                    @if($coverImageUrl)
+                                    <div class="w-20 h-13 rounded-xl overflow-hidden border border-stone-200 flex-shrink-0 shadow-sm" style="height: 3.25rem;">
+                                        <img src="{{ $coverImageUrl }}" class="w-full h-full object-cover"
+                                            onerror="this.parentElement.style.display='none'">
+                                    </div>
+                                    @endif
+                                </div>
+                            </div>
+
+                            {{-- Scene strip — 3 slots --}}
+                            <div>
+                                <label class="block text-[10px] font-bold uppercase tracking-[0.15em] text-stone-400 mb-2">
+                                    Scene photos
+                                    <span class="normal-case tracking-normal font-normal text-stone-300">— 3-photo strip below the hero</span>
+                                </label>
+                                <div class="space-y-2">
+                                    @foreach([0, 1, 2] as $si)
+                                    <div class="flex items-center gap-2.5">
+                                        <span class="text-[10px] font-bold text-stone-300 w-3 flex-shrink-0">{{ $si + 1 }}</span>
+                                        <input type="url" wire:model.blur="sceneImageUrls.{{ $si }}"
+                                            placeholder="https://…"
+                                            class="flex-1 px-3 py-2 border border-stone-200 rounded-xl text-stone-800 text-xs bg-white
+                                                   focus:outline-none focus:ring-2 focus:ring-green-600/20 focus:border-green-700
+                                                   placeholder:text-stone-300 transition-colors"/>
+                                        @if(!empty($sceneImageUrls[$si]))
+                                        <div class="w-14 h-9 rounded-lg overflow-hidden border border-stone-200 flex-shrink-0 shadow-sm">
+                                            <img src="{{ $sceneImageUrls[$si] }}" class="w-full h-full object-cover"
+                                                onerror="this.parentElement.style.display='none'">
+                                        </div>
+                                        @else
+                                        <div class="w-14 h-9 rounded-lg border border-dashed border-stone-200 bg-stone-50 flex-shrink-0 flex items-center justify-center">
+                                            <span class="text-stone-300 text-base">+</span>
+                                        </div>
+                                        @endif
+                                    </div>
+                                    @error('sceneImageUrls.' . $si) <p class="ml-5 text-xs text-red-500">{{ $message }}</p> @enderror
+                                    @endforeach
+                                </div>
+                            </div>
+
+                            {{-- Live poster preview strip --}}
+                            @if($coverImageUrl || collect($sceneImageUrls)->filter()->isNotEmpty())
+                            <div class="rounded-xl overflow-hidden border border-stone-200 mt-1" style="height: 80px;">
+                                <div class="flex h-full">
+                                    {{-- Hero thumbnail --}}
+                                    <div class="relative flex-1 bg-stone-900"
+                                        style="{{ $coverImageUrl ? 'background-image:url('.$coverImageUrl.');background-size:cover;background-position:center;' : '' }}">
+                                        <div class="absolute inset-0 bg-black/40 flex items-center justify-center">
+                                            <span class="text-[8px] font-bold uppercase tracking-widest text-white/70">Hero</span>
+                                        </div>
+                                    </div>
+                                    {{-- Scene thumbnails --}}
+                                    @foreach([0,1,2] as $si)
+                                    <div class="relative w-16 border-l border-white/10 bg-stone-800 flex-shrink-0"
+                                        style="{{ !empty($sceneImageUrls[$si]) ? 'background-image:url('.$sceneImageUrls[$si].');background-size:cover;background-position:center;' : '' }}">
+                                        @if(empty($sceneImageUrls[$si]))
+                                        <div class="absolute inset-0 flex items-center justify-center">
+                                            <span class="text-stone-600 text-lg">+</span>
+                                        </div>
+                                        @else
+                                        <div class="absolute inset-0 bg-black/20"></div>
+                                        @endif
+                                    </div>
+                                    @endforeach
+                                </div>
+                            </div>
+                            <p class="text-[10px] text-stone-400 text-center -mt-1">Poster preview — hero + 3 scene photos</p>
+                            @endif
+
                         </div>
                     </div>
 
@@ -774,16 +873,38 @@ $stepMeta = [
                 <div class="max-w-xl space-y-4">
 
                     {{-- Title + type --}}
-                    <div class="p-4 rounded-xl" style="background: #0d1e13;">
-                        <div class="flex items-start gap-3">
-                            <div class="w-10 h-10 rounded-xl flex-shrink-0"
-                                style="background: {{ $p->cover_color }}"></div>
+                    <div class="rounded-xl overflow-hidden" style="background: #0d1e13;">
+                        @if($p->cover_image_url)
+                        <div class="h-28 relative" style="background-image:url('{{ $p->cover_image_url }}');background-size:cover;background-position:center;">
+                            <div class="absolute inset-0" style="background:linear-gradient(to bottom,rgba(8,20,10,.3),rgba(8,20,10,.85));"></div>
+                            <div class="absolute bottom-3 left-4 right-4 flex items-end gap-3">
+                                <div class="flex-1">
+                                    <p class="font-bold text-white text-lg leading-tight drop-shadow">{{ $p->title }}</p>
+                                    @if($p->tagline)<p class="text-sm italic mt-0.5" style="color: #c9a84c;">{{ $p->tagline }}</p>@endif
+                                </div>
+                            </div>
+                        </div>
+                        @if(!empty($p->scene_image_urls))
+                        <div class="grid grid-cols-3 h-12">
+                            @foreach(array_slice($p->scene_image_urls, 0, 3) as $su)
+                            <div class="bg-stone-800 border-r border-white/5 last:border-0"
+                                style="background-image:url('{{ $su }}');background-size:cover;background-position:center;"></div>
+                            @endforeach
+                        </div>
+                        @endif
+                        <div class="px-4 py-3">
+                            <p class="text-xs capitalize" style="color: #5a7060;">{{ str_replace('_',' ',$p->type) }}  &bull;  {{ ucfirst($p->difficulty ?? 'moderate') }}</p>
+                        </div>
+                        @else
+                        <div class="p-4 flex items-start gap-3">
+                            <div class="w-10 h-10 rounded-xl flex-shrink-0" style="background: {{ $p->cover_color }}"></div>
                             <div>
                                 <p class="font-bold text-white text-lg leading-tight">{{ $p->title }}</p>
                                 @if($p->tagline)<p class="text-sm italic mt-0.5" style="color: #c9a84c;">{{ $p->tagline }}</p>@endif
                                 <p class="text-xs mt-1 capitalize" style="color: #5a7060;">{{ str_replace('_',' ',$p->type) }}  &bull;  {{ ucfirst($p->difficulty ?? 'moderate') }}</p>
                             </div>
                         </div>
+                        @endif
                     </div>
 
                     {{-- Info grid --}}

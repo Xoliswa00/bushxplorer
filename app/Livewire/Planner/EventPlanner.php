@@ -16,12 +16,14 @@ class EventPlanner extends Component
     public int $step = 1;
 
     // ── Step 1: Concept ───────────────────────────────────────────────────────
-    public string $title        = '';
-    public string $type         = 'hike';
-    public string $tagline      = '';
-    public string $description  = '';
-    public string $conceptNotes = '';
-    public string $coverColor   = '#166534';
+    public string $title          = '';
+    public string $type           = 'hike';
+    public string $tagline        = '';
+    public string $description    = '';
+    public string $conceptNotes   = '';
+    public string $coverColor     = '#166534';
+    public string $coverImageUrl  = '';
+    public array  $sceneImageUrls = ['', '', ''];
 
     // ── Step 2: Logistics ─────────────────────────────────────────────────────
     public string  $location     = '';
@@ -69,12 +71,15 @@ class EventPlanner extends Component
         $this->step         = min($plan->current_step, 5);
 
         // Step 1
-        $this->title        = $plan->title ?? '';
-        $this->type         = $plan->type ?? 'hike';
-        $this->tagline      = $plan->tagline ?? '';
-        $this->description  = $plan->description ?? '';
-        $this->conceptNotes = $plan->concept_notes ?? '';
-        $this->coverColor   = $plan->cover_color ?? '#166534';
+        $this->title          = $plan->title ?? '';
+        $this->type           = $plan->type ?? 'hike';
+        $this->tagline        = $plan->tagline ?? '';
+        $this->description    = $plan->description ?? '';
+        $this->conceptNotes   = $plan->concept_notes ?? '';
+        $this->coverColor     = $plan->cover_color ?? '#166534';
+        $this->coverImageUrl  = $plan->cover_image_url ?? '';
+        $urls = $plan->scene_image_urls ?? [];
+        $this->sceneImageUrls = [$urls[0] ?? '', $urls[1] ?? '', $urls[2] ?? ''];
 
         // Step 2
         $this->location     = $plan->location ?? '';
@@ -317,10 +322,12 @@ class EventPlanner extends Component
     {
         match ($this->step) {
             1 => $this->validate([
-                'title'       => ['required', 'string', 'min:3', 'max:120'],
-                'type'        => ['required', 'in:hike,workshop,social,corporate,multi_day'],
-                'tagline'     => ['nullable', 'string', 'max:160'],
-                'description' => ['nullable', 'string', 'max:2000'],
+                'title'                => ['required', 'string', 'min:3', 'max:120'],
+                'type'                 => ['required', 'in:hike,workshop,social,corporate,multi_day'],
+                'tagline'              => ['nullable', 'string', 'max:160'],
+                'description'          => ['nullable', 'string', 'max:2000'],
+                'coverImageUrl'        => ['nullable', 'url', 'max:500'],
+                'sceneImageUrls.*'     => ['nullable', 'url', 'max:500'],
             ]),
             2 => $this->validate([
                 'location'   => ['required', 'string', 'max:200'],
@@ -349,12 +356,14 @@ class EventPlanner extends Component
     {
         $data = match ($this->step) {
             1 => [
-                'title'         => $this->title,
-                'type'          => $this->type,
-                'tagline'       => $this->tagline,
-                'description'   => $this->description,
-                'concept_notes' => $this->conceptNotes,
-                'cover_color'   => $this->coverColor,
+                'title'            => $this->title,
+                'type'             => $this->type,
+                'tagline'          => $this->tagline,
+                'description'      => $this->description,
+                'concept_notes'    => $this->conceptNotes,
+                'cover_color'      => $this->coverColor,
+                'cover_image_url'  => $this->coverImageUrl ?: null,
+                'scene_image_urls' => array_values(array_filter($this->sceneImageUrls, fn ($u) => trim($u) !== '')),
             ],
             2 => [
                 'location'      => $this->location,
