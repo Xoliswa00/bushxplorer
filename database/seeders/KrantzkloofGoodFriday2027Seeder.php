@@ -32,7 +32,7 @@ class KrantzkloofGoodFriday2027Seeder extends Seeder
                 'price'                         => 680.00,
                 'max_capacity'                  => 15,
                 'min_capacity'                  => 9,
-                'is_published'                  => false,
+                'is_published'                  => true,
                 'is_cancelled'                  => false,
                 'points_awarded'                => 20,
                 'nights'                        => 2,
@@ -209,7 +209,7 @@ NOTES,
 
                 // Meta
                 'current_step'                  => 5,
-                'status'                        => 'review',
+                'status'                        => 'published',
                 'published_hike_id'             => $hike->id,
                 'notes'                         => 'Draft ready for review. Awaiting accommodation confirmation and final car assignments before publishing.',
             ]
@@ -238,7 +238,7 @@ NOTES,
                 ['Total expenses',  'R' . number_format($totalExpenses, 2)],
                 ['Revenue (FULL)',  'R' . number_format($revenueFullPkg, 2)],
                 ['Margin',          'R' . number_format($revenueFullPkg - $totalExpenses, 2)],
-                ['Plan status',     'DRAFT — ready for review & publication'],
+                ['Plan status',     'PUBLISHED — live on the platform'],
             ]
         );
         $this->command->line('');
