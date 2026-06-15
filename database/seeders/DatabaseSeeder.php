@@ -25,6 +25,7 @@ class DatabaseSeeder extends Seeder
             HartiesHeritage2026Seeder::class,
             TwelveFallsCircuit2026Seeder::class,
             BadgesSeeder::class,
+            KrantzkloofGoodFriday2027Seeder::class,
         ]);
     }
 }
