@@ -189,11 +189,13 @@ NOTES,
                 'points_awarded'                => 20,
                 'includes_transport'            => true,
                 'transport_fee'                 => 550.00,
-                'transport_pickup_points'       => json_encode([
-                    ['label' => 'Car 1', 'note' => 'Meeting point — Engen N1 South, 05:00'],
-                    ['label' => 'Car 2', 'note' => 'Meeting point — Engen N1 South, 05:00'],
-                    ['label' => 'Car 3', 'note' => 'Meeting point — Engen N1 South, 05:00'],
-                ]),
+                'transport_pickup_points'       => [
+                    [
+                        'name'           => 'Engen Garage, N1 South — Crown Interchange, Johannesburg',
+                        'departure_time' => '05:00',
+                        'max_seats'      => 15,
+                    ],
+                ],
 
                 // Step 3 accommodation
                 'nights'                        => 2,
@@ -203,7 +205,7 @@ NOTES,
                 'what_to_bring'                 => $hike->what_to_bring,
 
                 // Step 4 — Financials
-                'expenses'                      => json_encode($expenses),
+                'expenses'                      => $expenses,
                 'target_margin_pct'             => 5.00,
                 'price'                         => 680.00,
 

@@ -622,16 +622,23 @@
 
             {{-- Transport --}}
             @if($plan->includes_transport && !empty($plan->transport_pickup_points))
+            @php $isPrivateCar = count($plan->transport_pickup_points) === 1; @endphp
             <div class="transport-box">
                 <div class="transport-box__header">
-                    <span>🚌</span>
-                    <span class="transport-box__title">Transport Available &mdash; R{{ number_format($plan->transport_fee, 0) }} per person</span>
+                    <span>{{ $isPrivateCar ? '🚗' : '🚌' }}</span>
+                    <span class="transport-box__title">
+                        {{ $isPrivateCar ? 'Private Car Convoy' : 'Transport Available' }}
+                        &mdash; R{{ number_format($plan->transport_fee, 0) }} per person
+                    </span>
                 </div>
                 <ul class="transport-stops">
                     @foreach($plan->transport_pickup_points as $pp)
                     <li>
-                        <span class="stop-name">📌 {{ $pp['name'] }}</span>
-                        <span>{{ $pp['departure_time'] }} &bull; {{ $pp['max_seats'] }} seats</span>
+                        <span class="stop-name">📍 {{ $pp['name'] ?? '—' }}</span>
+                        <span>
+                            {{ $pp['departure_time'] ?? '' }}
+                            @isset($pp['max_seats']) &bull; {{ $pp['max_seats'] }} seats @endisset
+                        </span>
                     </li>
                     @endforeach
                 </ul>
