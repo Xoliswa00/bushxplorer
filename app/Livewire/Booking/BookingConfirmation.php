@@ -5,7 +5,10 @@ namespace App\Livewire\Booking;
 use App\Models\Booking;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Computed;
+use Livewire\Attributes\Layout;
 use Livewire\Component;
+
+#[Layout('components.layouts.app')]
 
 class BookingConfirmation extends Component
 {

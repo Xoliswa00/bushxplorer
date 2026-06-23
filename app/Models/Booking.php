@@ -21,15 +21,23 @@ class Booking extends Model
     const STATUS_CANCELLED        = 'cancelled';
     const STATUS_REFUNDED         = 'refunded';
 
+    const PACKAGE_DAY  = 'day';
+    const PACKAGE_STAY = 'stay';
+    const PACKAGE_FULL = 'full';
+
     protected $fillable = [
         'booking_ref',
         'member_id',
         'hike_id',
+        'pickup_point_id',
         'status',
+        'package',
         'spots',
         'amount_due',
         'amount_paid',
         'discount_applied',
+        'transport_fee_applied',
+        'accommodation_fee_applied',
         'notes',
         'confirmed_at',
         'attended_at',
@@ -37,9 +45,11 @@ class Booking extends Model
     ];
 
     protected $casts = [
-        'amount_due'       => 'decimal:2',
-        'amount_paid'      => 'decimal:2',
-        'discount_applied' => 'decimal:2',
+        'amount_due'                 => 'decimal:2',
+        'amount_paid'                => 'decimal:2',
+        'discount_applied'           => 'decimal:2',
+        'transport_fee_applied'      => 'decimal:2',
+        'accommodation_fee_applied'  => 'decimal:2',
         'confirmed_at'     => 'datetime',
         'attended_at'      => 'datetime',
         'cancelled_at'     => 'datetime',
@@ -67,6 +77,11 @@ class Booking extends Model
     public function hike(): BelongsTo
     {
         return $this->belongsTo(Hike::class);
+    }
+
+    public function pickupPoint(): BelongsTo
+    {
+        return $this->belongsTo(PickupPoint::class);
     }
 
     public function payments(): HasMany

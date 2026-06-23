@@ -6,9 +6,12 @@ use App\Models\Booking;
 use App\Services\BookingService;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Computed;
+use Livewire\Attributes\Layout;
 use Livewire\Attributes\Rule;
 use Livewire\Component;
 use Livewire\WithFileUploads;
+
+#[Layout('components.layouts.app')]
 
 class PaymentUpload extends Component
 {
