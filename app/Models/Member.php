@@ -84,6 +84,6 @@ class Member extends Model
 
     public function notifications(): HasMany
     {
-        return $this->hasMany(MemberNotification::class);
+        return $this->hasMany(MemberNotification::class)->latest();
     }
 }

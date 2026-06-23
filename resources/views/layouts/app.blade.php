@@ -15,6 +15,7 @@
         <div class="flex items-center gap-4 text-sm">
             <a href="{{ route('hikes.index') }}" class="hover:text-green-200 transition-colors">Hikes</a>
             @auth
+                <livewire:notification-bell />
                 <span class="text-green-300">{{ Auth::user()->name }}</span>
             @endauth
         </div>
