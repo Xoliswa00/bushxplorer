@@ -9,19 +9,27 @@ use App\Models\PickupPoint;
 use App\Services\BookingService;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Computed;
+use Livewire\Attributes\Layout;
 use Livewire\Component;
 
+#[Layout('components.layouts.app')]
 class BookingForm extends Component
 {
-    public int  $hikeId;
-    public int  $spots          = 1;
-    public ?int $pickupPointId  = null;
-    public bool $wantsTransport = false;
-    public string $notes        = '';
+    public int    $hikeId;
+    public int    $spots          = 1;
+    public string $package        = 'day';
+    public ?int   $pickupPointId  = null;
+    public bool   $wantsTransport = false;
+    public string $notes          = '';
 
     public function mount(int $hikeId): void
     {
         $this->hikeId = $hikeId;
+
+        // default package based on trip type
+        if (($this->hike->nights ?? 0) > 0) {
+            $this->package = 'stay';
+        }
     }
 
     #[Computed]
@@ -37,17 +45,15 @@ class BookingForm extends Component
     }
 
     #[Computed]
-    public function pickupPoints()
+    public function isOvernight(): bool
     {
-        return $this->hike->pickupPoints;
+        return ($this->hike->nights ?? 0) > 0;
     }
 
     #[Computed]
-    public function selectedPickup(): ?PickupPoint
+    public function pickupPoints()
     {
-        return $this->pickupPointId
-            ? $this->hike->pickupPoints->find($this->pickupPointId)
-            : null;
+        return $this->hike->pickupPoints;
     }
 
     #[Computed]
@@ -57,37 +63,63 @@ class BookingForm extends Component
     }
 
     #[Computed]
-    public function hikeFee(): float
+    public function discountPct(): float
     {
-        $discount = $this->member->explorerLevel?->discount_percentage ?? 0;
-        $base     = $this->hike->price * $this->spots;
-        return round($base - ($base * $discount / 100), 2);
+        return (float) ($this->member->explorerLevel?->discount_percentage ?? 0);
+    }
+
+    #[Computed]
+    public function ticketFee(): float
+    {
+        $base = $this->hike->price * $this->spots;
+        return round($base - ($base * $this->discountPct / 100), 2);
     }
 
     #[Computed]
     public function discountAmount(): float
     {
-        $discount = $this->member->explorerLevel?->discount_percentage ?? 0;
-        $base     = $this->hike->price * $this->spots;
-        return round($base * $discount / 100, 2);
+        $base = $this->hike->price * $this->spots;
+        return round($base * $this->discountPct / 100, 2);
+    }
+
+    #[Computed]
+    public function accommodationFee(): float
+    {
+        if (! $this->isOvernight) return 0.0;
+        if (! in_array($this->package, ['stay', 'full'])) return 0.0;
+        return round((float) $this->hike->accommodation_cost_per_person * $this->hike->nights * $this->spots, 2);
     }
 
     #[Computed]
     public function transportFee(): float
     {
-        if (! $this->wantsTransport || ! $this->hike->includes_transport) return 0.0;
-        return (float) $this->hike->transport_fee * $this->spots;
+        $needsTransport = $this->package === 'full' || ($this->package === 'day' && $this->wantsTransport);
+        if (! $needsTransport || ! $this->hike->includes_transport) return 0.0;
+        return round((float) $this->hike->transport_fee * $this->spots, 2);
     }
 
     #[Computed]
     public function amountDue(): float
     {
-        return $this->hikeFee + $this->transportFee;
+        return $this->ticketFee + $this->accommodationFee + $this->transportFee;
     }
 
     public function updatedSpots(): void
     {
         $this->spots = max(1, min($this->spots, $this->spotsRemaining));
+        unset($this->ticketFee, $this->discountAmount, $this->accommodationFee, $this->transportFee, $this->amountDue);
+    }
+
+    public function updatedPackage(): void
+    {
+        // Reset transport/pickup when package changes
+        if ($this->package !== 'full') {
+            if (! $this->isOvernight) {
+                $this->wantsTransport = false;
+                $this->pickupPointId  = null;
+            }
+        }
+        unset($this->accommodationFee, $this->transportFee, $this->amountDue);
     }
 
     public function updatedWantsTransport(): void
@@ -95,25 +127,27 @@ class BookingForm extends Component
         if (! $this->wantsTransport) {
             $this->pickupPointId = null;
         }
+        unset($this->transportFee, $this->amountDue);
     }
 
     public function submit(): void
     {
+        $isOvernightFull = $this->isOvernight && $this->package === 'full';
+        $wantsPickup     = $isOvernightFull || (! $this->isOvernight && $this->wantsTransport);
+
         $rules = [
-            'spots' => ['required', 'integer', 'min:1', 'max:' . $this->spotsRemaining],
-            'notes' => ['nullable', 'string', 'max:500'],
+            'spots'   => ['required', 'integer', 'min:1', 'max:' . $this->spotsRemaining],
+            'package' => ['required', 'in:day,stay,full'],
+            'notes'   => ['nullable', 'string', 'max:500'],
         ];
 
-        if ($this->hike->includes_transport && $this->wantsTransport) {
+        if ($wantsPickup && $this->hike->includes_transport) {
             $rules['pickupPointId'] = [
                 'required',
                 'integer',
                 function ($attr, $value, $fail) {
                     $point = $this->hike->pickupPoints->find($value);
-                    if (! $point) {
-                        $fail('Invalid pickup point.');
-                        return;
-                    }
+                    if (! $point) { $fail('Invalid pickup point.'); return; }
                     if ($point->seats_remaining < $this->spots) {
                         $fail("Only {$point->seats_remaining} seat(s) left at {$point->name}.");
                     }
@@ -126,7 +160,8 @@ class BookingForm extends Component
         $booking = app(BookingService::class)->createDraft(
             $this->member,
             $this->hike,
-            $this->spots
+            $this->spots,
+            $this->package
         );
 
         $updates = [];
@@ -135,10 +170,12 @@ class BookingForm extends Component
             $updates['notes'] = $this->notes;
         }
 
-        if ($this->wantsTransport && $this->pickupPointId) {
-            $updates['pickup_point_id']      = $this->pickupPointId;
-            $updates['transport_fee_applied'] = $this->transportFee;
-            $updates['amount_due']            = $this->amountDue;
+        if ($wantsPickup && $this->pickupPointId) {
+            $updates['pickup_point_id']       = $this->pickupPointId;
+            $updates['transport_fee_applied']  = $this->transportFee;
+            $updates['amount_due']             = $this->amountDue;
+        } elseif (! $wantsPickup) {
+            $updates['amount_due'] = $this->amountDue;
         }
 
         if ($updates) {

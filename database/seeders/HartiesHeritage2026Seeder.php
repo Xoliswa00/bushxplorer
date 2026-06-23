@@ -99,10 +99,17 @@ class HartiesHeritage2026Seeder extends Seeder
 
     private function seedAdminUser(): User
     {
-        return User::firstOrCreate(
+        $user = User::firstOrCreate(
             ['email' => 'admin@bushxplorer.co.za'],
-            ['name' => 'Xoliswa Masuku', 'password' => Hash::make('password')]
+            ['name' => 'Xoliswa Masuku', 'password' => Hash::make('password'), 'is_admin' => true]
         );
+
+        // Ensure is_admin is set even on existing records
+        if (! $user->is_admin) {
+            $user->update(['is_admin' => true]);
+        }
+
+        return $user;
     }
 
     // ── 3. Members ─────────────────────────────────────────────────────────

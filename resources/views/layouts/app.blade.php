@@ -67,16 +67,28 @@
                     Hikes
                 </a>
                 @auth
+                <a href="{{ route('member.dashboard') }}"
+                    class="nav-link text-sm font-medium tracking-wide transition-colors {{ request()->routeIs('member.*') ? 'active' : '' }}"
+                    style="color: {{ request()->routeIs('member.*') ? '#c9a84c' : '#8aad90' }};">
+                    My Trips
+                </a>
                 <a href="{{ route('planner.index') }}"
                     class="nav-link text-sm font-medium tracking-wide transition-colors {{ request()->routeIs('planner.*') ? 'active' : '' }}"
                     style="color: {{ request()->routeIs('planner.*') ? '#c9a84c' : '#8aad90' }};">
                     Planner
                 </a>
+                @if(Auth::user()->is_admin)
+                <a href="{{ route('admin.hikes') }}"
+                    class="nav-link text-sm font-medium tracking-wide transition-colors {{ request()->routeIs('admin.*') ? 'active' : '' }}"
+                    style="color: {{ request()->routeIs('admin.*') ? '#c9a84c' : '#8aad90' }};">
+                    Admin
+                </a>
+                @endif
                 @endauth
             </div>
 
             {{-- Right: user --}}
-            <div class="flex items-center gap-4">
+            <div class="flex items-center gap-3">
                 @auth
                 <livewire:notification-bell />
                 <div class="flex items-center gap-2">
@@ -86,10 +98,21 @@
                     </div>
                     <span class="text-sm font-medium hidden sm:block" style="color: #8aad90;">{{ Auth::user()->name }}</span>
                 </div>
+                <form method="POST" action="{{ route('logout') }}">
+                    @csrf
+                    <button type="submit" class="text-xs font-medium px-3 py-1.5 rounded-lg transition-colors"
+                        style="color: #4a6a52; border: 1px solid rgba(255,255,255,0.06);">
+                        Sign out
+                    </button>
+                </form>
                 @else
                 <a href="{{ route('login') }}" class="text-sm font-semibold px-4 py-1.5 rounded-lg transition-colors"
-                    style="color: #c9a84c; border: 1px solid rgba(201,168,76,0.3);">
+                    style="color: #8aad90;">
                     Sign in
+                </a>
+                <a href="{{ route('register') }}" class="text-sm font-semibold px-4 py-1.5 rounded-lg transition-colors"
+                    style="color: #c9a84c; border: 1px solid rgba(201,168,76,0.3);">
+                    Join
                 </a>
                 @endauth
             </div>

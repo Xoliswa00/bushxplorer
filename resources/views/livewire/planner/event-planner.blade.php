@@ -1,6 +1,6 @@
 @php
 $stepMeta = [
-    1 => ['icon' => '✦', 'sub' => 'Name, type & poster colour'],
+    1 => ['icon' => '✦', 'sub' => 'Name, type, colours & photos'],
     2 => ['icon' => '◎', 'sub' => 'Date, place & difficulty'],
     3 => ['icon' => '◈', 'sub' => 'Headcount & transport'],
     4 => ['icon' => '◉', 'sub' => 'Budget, pricing & forecast'],
@@ -226,6 +226,105 @@ $stepMeta = [
                         </div>
                     </div>
 
+                    {{-- ── Trip Photos ── --}}
+                    <div class="rounded-xl border border-stone-200 overflow-hidden">
+                        <div class="px-4 py-3 bg-stone-50 border-b border-stone-100 flex items-center justify-between">
+                            <div>
+                                <p class="text-[10px] font-bold uppercase tracking-[0.15em] text-stone-500">Trip Photos</p>
+                                <p class="text-[10px] text-stone-400 mt-0.5">Paste image URLs — they appear as the hero & scene strip on your poster</p>
+                            </div>
+                            <span class="text-lg">🖼</span>
+                        </div>
+
+                        <div class="p-4 space-y-4 bg-white">
+
+                            {{-- Cover / hero photo --}}
+                            <div>
+                                <label class="block text-[10px] font-bold uppercase tracking-[0.15em] text-stone-400 mb-1.5">
+                                    Hero cover photo
+                                    <span class="normal-case tracking-normal font-normal text-stone-300">— fills the top of the poster</span>
+                                </label>
+                                <div class="flex gap-3 items-start">
+                                    <div class="flex-1">
+                                        <input type="url" wire:model.blur="coverImageUrl"
+                                            placeholder="https://images.unsplash.com/…"
+                                            class="w-full px-3 py-2.5 border border-stone-200 rounded-xl text-stone-800 text-sm bg-white
+                                                   focus:outline-none focus:ring-2 focus:ring-green-600/20 focus:border-green-700
+                                                   placeholder:text-stone-300 transition-colors"/>
+                                        @error('coverImageUrl') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
+                                    </div>
+                                    @if($coverImageUrl)
+                                    <div class="w-20 h-13 rounded-xl overflow-hidden border border-stone-200 flex-shrink-0 shadow-sm" style="height: 3.25rem;">
+                                        <img src="{{ $coverImageUrl }}" class="w-full h-full object-cover"
+                                            onerror="this.parentElement.style.display='none'">
+                                    </div>
+                                    @endif
+                                </div>
+                            </div>
+
+                            {{-- Scene strip — 3 slots --}}
+                            <div>
+                                <label class="block text-[10px] font-bold uppercase tracking-[0.15em] text-stone-400 mb-2">
+                                    Scene photos
+                                    <span class="normal-case tracking-normal font-normal text-stone-300">— 3-photo strip below the hero</span>
+                                </label>
+                                <div class="space-y-2">
+                                    @foreach([0, 1, 2] as $si)
+                                    <div class="flex items-center gap-2.5">
+                                        <span class="text-[10px] font-bold text-stone-300 w-3 flex-shrink-0">{{ $si + 1 }}</span>
+                                        <input type="url" wire:model.blur="sceneImageUrls.{{ $si }}"
+                                            placeholder="https://…"
+                                            class="flex-1 px-3 py-2 border border-stone-200 rounded-xl text-stone-800 text-xs bg-white
+                                                   focus:outline-none focus:ring-2 focus:ring-green-600/20 focus:border-green-700
+                                                   placeholder:text-stone-300 transition-colors"/>
+                                        @if(!empty($sceneImageUrls[$si]))
+                                        <div class="w-14 h-9 rounded-lg overflow-hidden border border-stone-200 flex-shrink-0 shadow-sm">
+                                            <img src="{{ $sceneImageUrls[$si] }}" class="w-full h-full object-cover"
+                                                onerror="this.parentElement.style.display='none'">
+                                        </div>
+                                        @else
+                                        <div class="w-14 h-9 rounded-lg border border-dashed border-stone-200 bg-stone-50 flex-shrink-0 flex items-center justify-center">
+                                            <span class="text-stone-300 text-base">+</span>
+                                        </div>
+                                        @endif
+                                    </div>
+                                    @error('sceneImageUrls.' . $si) <p class="ml-5 text-xs text-red-500">{{ $message }}</p> @enderror
+                                    @endforeach
+                                </div>
+                            </div>
+
+                            {{-- Live poster preview strip --}}
+                            @if($coverImageUrl || collect($sceneImageUrls)->filter()->isNotEmpty())
+                            <div class="rounded-xl overflow-hidden border border-stone-200 mt-1" style="height: 80px;">
+                                <div class="flex h-full">
+                                    {{-- Hero thumbnail --}}
+                                    <div class="relative flex-1 bg-stone-900"
+                                        style="{{ $coverImageUrl ? 'background-image:url('.$coverImageUrl.');background-size:cover;background-position:center;' : '' }}">
+                                        <div class="absolute inset-0 bg-black/40 flex items-center justify-center">
+                                            <span class="text-[8px] font-bold uppercase tracking-widest text-white/70">Hero</span>
+                                        </div>
+                                    </div>
+                                    {{-- Scene thumbnails --}}
+                                    @foreach([0,1,2] as $si)
+                                    <div class="relative w-16 border-l border-white/10 bg-stone-800 flex-shrink-0"
+                                        style="{{ !empty($sceneImageUrls[$si]) ? 'background-image:url('.$sceneImageUrls[$si].');background-size:cover;background-position:center;' : '' }}">
+                                        @if(empty($sceneImageUrls[$si]))
+                                        <div class="absolute inset-0 flex items-center justify-center">
+                                            <span class="text-stone-600 text-lg">+</span>
+                                        </div>
+                                        @else
+                                        <div class="absolute inset-0 bg-black/20"></div>
+                                        @endif
+                                    </div>
+                                    @endforeach
+                                </div>
+                            </div>
+                            <p class="text-[10px] text-stone-400 text-center -mt-1">Poster preview — hero + 3 scene photos</p>
+                            @endif
+
+                        </div>
+                    </div>
+
                 </div>
 
                 {{-- ─── STEP 2: Logistics ──────────────────────── --}}
@@ -341,7 +440,7 @@ $stepMeta = [
                         </div>
                     </div>
 
-                    {{-- Transport toggle --}}
+                    {{-- ── Transport toggle ── --}}
                     <div class="rounded-xl overflow-hidden border {{ $includesTransport ? 'border-amber-300' : 'border-stone-200' }} transition-colors">
                         <button type="button" wire:click="$set('includesTransport', {{ $includesTransport ? 'false' : 'true' }})"
                             class="w-full flex items-center justify-between p-4 text-left transition-colors
@@ -420,6 +519,200 @@ $stepMeta = [
                         @endif
                     </div>
 
+                    {{-- ── Accommodation toggle ── --}}
+                    <div class="rounded-xl overflow-hidden border {{ $includesAccommodation ? 'border-indigo-300' : 'border-stone-200' }} transition-colors">
+                        <button type="button" wire:click="$set('includesAccommodation', {{ $includesAccommodation ? 'false' : 'true' }})"
+                            class="w-full flex items-center justify-between p-4 text-left transition-colors
+                                   {{ $includesAccommodation ? 'bg-indigo-50' : 'bg-stone-50 hover:bg-stone-100' }}">
+                            <div class="flex items-center gap-3">
+                                <div class="w-9 h-9 rounded-xl flex items-center justify-center text-lg
+                                            {{ $includesAccommodation ? 'bg-indigo-100' : 'bg-stone-200' }}">🛏</div>
+                                <div>
+                                    <p class="text-sm font-semibold text-stone-800">Include overnight accommodation</p>
+                                    <p class="text-xs text-stone-400 mt-0.5">Weekend or multi-day trip — lodge/camp cost added per person</p>
+                                </div>
+                            </div>
+                            <div class="w-12 h-6 rounded-full flex items-center transition-all flex-shrink-0
+                                        {{ $includesAccommodation ? 'bg-indigo-500 justify-end pr-0.5' : 'bg-stone-300 justify-start pl-0.5' }}">
+                                <div class="w-5 h-5 rounded-full bg-white shadow-sm"></div>
+                            </div>
+                        </button>
+
+                        @if($includesAccommodation)
+                        <div class="border-t border-indigo-100 bg-white">
+
+                            {{-- ── Find accommodation ─────────────────────────── --}}
+                            <div class="p-4 border-b border-stone-100">
+                                <div class="flex items-center justify-between mb-2">
+                                    <p class="text-[10px] font-bold uppercase tracking-[0.15em] text-indigo-500">Find accommodation</p>
+                                    @if($selectedAccommodationId)
+                                    <button type="button" wire:click="clearAccommodationSelection"
+                                        class="text-[10px] text-stone-400 hover:text-red-400 transition-colors">
+                                        ✕ Clear selection
+                                    </button>
+                                    @endif
+                                </div>
+
+                                {{-- Search input --}}
+                                <div class="relative mb-3">
+                                    <span class="absolute left-3 top-1/2 -translate-y-1/2 text-stone-300 text-sm">🔍</span>
+                                    <input type="text" wire:model.live.debounce.300ms="accommodationSearch"
+                                        placeholder="Search by name or area (e.g. Magaliesberg, Drakensberg)…"
+                                        class="w-full pl-9 pr-4 py-2.5 border border-stone-200 rounded-xl text-stone-800 text-xs bg-white
+                                               focus:outline-none focus:ring-2 focus:ring-indigo-400/20 focus:border-indigo-400
+                                               placeholder:text-stone-300 transition-colors"/>
+                                </div>
+
+                                {{-- Suggestion cards --}}
+                                @if($this->accommodationSuggestions->isNotEmpty())
+                                <div class="grid grid-cols-3 gap-2">
+                                    @foreach($this->accommodationSuggestions as $acc)
+                                    @php $isSelected = $selectedAccommodationId === $acc->id; @endphp
+                                    <button type="button" wire:click="selectAccommodation({{ $acc->id }})"
+                                        wire:key="acc-{{ $acc->id }}"
+                                        class="text-left p-3 rounded-xl border transition-all
+                                               {{ $isSelected
+                                                  ? 'border-indigo-400 bg-indigo-50 shadow-sm shadow-indigo-100'
+                                                  : 'border-stone-200 bg-stone-50 hover:border-indigo-200 hover:bg-indigo-50/40' }}">
+
+                                        <div class="flex items-center justify-between mb-1.5">
+                                            <span class="text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded"
+                                                style="background: {{ $acc->typeColor() }}18; color: {{ $acc->typeColor() }};">
+                                                {{ $acc->typeLabel() }}
+                                            </span>
+                                            @if($isSelected)
+                                            <span class="text-indigo-500 text-xs font-bold">✓</span>
+                                            @endif
+                                        </div>
+
+                                        <p class="text-xs font-semibold text-stone-800 leading-snug mb-0.5">{{ $acc->name }}</p>
+                                        <p class="text-[10px] text-stone-400">{{ $acc->region }}</p>
+
+                                        @if($acc->avg_cost_per_person)
+                                        <p class="text-xs font-bold mt-1.5 {{ $isSelected ? 'text-indigo-600' : 'text-stone-600' }}">
+                                            R{{ number_format($acc->avg_cost_per_person, 0) }}<span class="font-normal text-stone-400">/person</span>
+                                        </p>
+                                        @endif
+
+                                        @if($acc->amenities)
+                                        <div class="flex flex-wrap gap-1 mt-1.5">
+                                            @foreach(array_slice($acc->amenities, 0, 3) as $amenity)
+                                            <span class="text-[8px] px-1.5 py-0.5 rounded bg-stone-100 text-stone-500">
+                                                {{ match($amenity) {
+                                                    'breakfast_included' => '🍳',
+                                                    'pool'               => '🏊',
+                                                    'wifi'               => '📶',
+                                                    'hiking_trails'      => '🥾',
+                                                    'guided_hikes'       => '🧭',
+                                                    'braai'              => '🔥',
+                                                    'spa'                => '💆',
+                                                    'game_viewing'       => '🦁',
+                                                    'restaurant'         => '🍽️',
+                                                    'camping'            => '⛺',
+                                                    default              => '✓',
+                                                } }} {{ str_replace('_', ' ', $amenity) }}
+                                            </span>
+                                            @endforeach
+                                        </div>
+                                        @endif
+
+                                        @if($acc->group_notes)
+                                        <p class="text-[9px] text-indigo-500 mt-1.5 leading-snug">💡 {{ Str::limit($acc->group_notes, 60) }}</p>
+                                        @endif
+                                    </button>
+                                    @endforeach
+                                </div>
+                                @else
+                                <p class="text-xs text-stone-400 italic py-1">
+                                    @if(trim($accommodationSearch) !== '')
+                                        No results for "{{ $accommodationSearch }}" — fill in the details below manually.
+                                    @else
+                                        No spots in our directory for "{{ $location }}" yet — enter details manually below.
+                                    @endif
+                                </p>
+                                @endif
+                            </div>
+
+                            {{-- ── Manual / confirm fields ─────────────────────── --}}
+                            <div class="p-4 space-y-4">
+
+                                {{-- Nights + cost row --}}
+                                <div class="flex items-end gap-4">
+                                    <div>
+                                        <label class="block text-[10px] font-bold uppercase tracking-[0.15em] text-stone-400 mb-1.5">
+                                            Nights
+                                        </label>
+                                        <div class="flex items-center gap-2">
+                                            <button type="button" wire:click="$set('nights', max(1, nights - 1))"
+                                                class="w-8 h-8 rounded-lg bg-stone-100 hover:bg-stone-200 text-stone-600 font-bold text-base flex items-center justify-center transition-colors">−</button>
+                                            <span class="w-8 text-center font-bold text-stone-900 text-lg">{{ $nights }}</span>
+                                            <button type="button" wire:click="$set('nights', nights + 1)"
+                                                class="w-8 h-8 rounded-lg bg-stone-100 hover:bg-stone-200 text-stone-600 font-bold text-base flex items-center justify-center transition-colors">+</button>
+                                        </div>
+                                        @error('nights') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
+                                    </div>
+                                    <div class="flex-1">
+                                        <label class="block text-[10px] font-bold uppercase tracking-[0.15em] text-stone-400 mb-1.5">
+                                            Cost per person / night (R)
+                                        </label>
+                                        <div class="relative w-40">
+                                            <span class="absolute left-4 top-1/2 -translate-y-1/2 text-stone-400 font-semibold text-sm">R</span>
+                                            <input type="number" wire:model.live="accommodationCostPerPerson" min="0" step="0.01"
+                                                class="w-full pl-8 pr-4 py-3 border border-stone-200 rounded-xl text-stone-900 font-bold text-center bg-white
+                                                       focus:outline-none focus:ring-2 focus:ring-indigo-400/30 focus:border-indigo-400 transition-colors"/>
+                                        </div>
+                                        @error('accommodationCostPerPerson') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
+                                    </div>
+                                    @if((float)$accommodationCostPerPerson > 0)
+                                    <div class="pb-1">
+                                        <p class="text-[10px] text-stone-400 uppercase tracking-wide font-bold">Total / person</p>
+                                        <p class="text-lg font-bold text-indigo-700">R{{ number_format((float)$accommodationCostPerPerson * $nights, 2) }}</p>
+                                        <p class="text-[10px] text-stone-400">{{ $nights }} night{{ $nights > 1 ? 's' : '' }}</p>
+                                    </div>
+                                    @endif
+                                </div>
+
+                                {{-- Venue name --}}
+                                <div>
+                                    <label class="block text-[10px] font-bold uppercase tracking-[0.15em] text-stone-400 mb-1.5">
+                                        Venue name
+                                    </label>
+                                    <input type="text" wire:model="accommodationName"
+                                        placeholder="e.g. De Hoek Mountain Lodge"
+                                        class="w-full px-4 py-3 border border-stone-200 rounded-xl text-stone-900 font-medium text-sm bg-white
+                                               focus:outline-none focus:ring-2 focus:ring-indigo-400/20 focus:border-indigo-400
+                                               placeholder:text-stone-300 transition-colors"/>
+                                </div>
+
+                                {{-- What's included / What to bring --}}
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-[10px] font-bold uppercase tracking-[0.15em] text-stone-400 mb-1.5">
+                                            What's included
+                                        </label>
+                                        <textarea wire:model="whatIsIncluded" rows="3"
+                                            placeholder="e.g. 2 nights, Friday dinner, guided hike, breakfast"
+                                            class="w-full px-3 py-2.5 border border-stone-200 rounded-xl text-stone-900 text-xs bg-white resize-none
+                                                   focus:outline-none focus:ring-2 focus:ring-indigo-400/20 focus:border-indigo-400
+                                                   placeholder:text-stone-300 transition-colors"></textarea>
+                                    </div>
+                                    <div>
+                                        <label class="block text-[10px] font-bold uppercase tracking-[0.15em] text-stone-400 mb-1.5">
+                                            What to bring
+                                        </label>
+                                        <textarea wire:model="whatToBring" rows="3"
+                                            placeholder="e.g. Sleeping bag, toiletries, torch, snacks"
+                                            class="w-full px-3 py-2.5 border border-stone-200 rounded-xl text-stone-900 text-xs bg-white resize-none
+                                                   focus:outline-none focus:ring-2 focus:ring-indigo-400/20 focus:border-indigo-400
+                                                   placeholder:text-stone-300 transition-colors"></textarea>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+                        @endif
+                    </div>
+
                 </div>
 
                 {{-- ─── STEP 4: Financials ─────────────────────── --}}
@@ -448,7 +741,7 @@ $stepMeta = [
                                 <select wire:model="expenses.{{ $idx }}.category"
                                     class="w-full px-2 py-2 text-xs border border-stone-200 rounded-lg bg-white text-stone-700
                                            focus:outline-none focus:border-green-600 appearance-none">
-                                    @foreach(['transport'=>'Transport','permits'=>'Permits','equipment'=>'Equipment','refreshments'=>'Food','marketing'=>'Marketing','other'=>'Other'] as $v=>$l)
+                                    @foreach(['transport'=>'Transport','permits'=>'Permits','equipment'=>'Equipment','refreshments'=>'Food','accommodation'=>'Accommodation','marketing'=>'Marketing','other'=>'Other'] as $v=>$l)
                                     <option value="{{ $v }}">{{ $l }}</option>
                                     @endforeach
                                 </select>
@@ -580,16 +873,38 @@ $stepMeta = [
                 <div class="max-w-xl space-y-4">
 
                     {{-- Title + type --}}
-                    <div class="p-4 rounded-xl" style="background: #0d1e13;">
-                        <div class="flex items-start gap-3">
-                            <div class="w-10 h-10 rounded-xl flex-shrink-0"
-                                style="background: {{ $p->cover_color }}"></div>
+                    <div class="rounded-xl overflow-hidden" style="background: #0d1e13;">
+                        @if($p->cover_image_url)
+                        <div class="h-28 relative" style="background-image:url('{{ $p->cover_image_url }}');background-size:cover;background-position:center;">
+                            <div class="absolute inset-0" style="background:linear-gradient(to bottom,rgba(8,20,10,.3),rgba(8,20,10,.85));"></div>
+                            <div class="absolute bottom-3 left-4 right-4 flex items-end gap-3">
+                                <div class="flex-1">
+                                    <p class="font-bold text-white text-lg leading-tight drop-shadow">{{ $p->title }}</p>
+                                    @if($p->tagline)<p class="text-sm italic mt-0.5" style="color: #c9a84c;">{{ $p->tagline }}</p>@endif
+                                </div>
+                            </div>
+                        </div>
+                        @if(!empty($p->scene_image_urls))
+                        <div class="grid grid-cols-3 h-12">
+                            @foreach(array_slice($p->scene_image_urls, 0, 3) as $su)
+                            <div class="bg-stone-800 border-r border-white/5 last:border-0"
+                                style="background-image:url('{{ $su }}');background-size:cover;background-position:center;"></div>
+                            @endforeach
+                        </div>
+                        @endif
+                        <div class="px-4 py-3">
+                            <p class="text-xs capitalize" style="color: #5a7060;">{{ str_replace('_',' ',$p->type) }}  &bull;  {{ ucfirst($p->difficulty ?? 'moderate') }}</p>
+                        </div>
+                        @else
+                        <div class="p-4 flex items-start gap-3">
+                            <div class="w-10 h-10 rounded-xl flex-shrink-0" style="background: {{ $p->cover_color }}"></div>
                             <div>
                                 <p class="font-bold text-white text-lg leading-tight">{{ $p->title }}</p>
                                 @if($p->tagline)<p class="text-sm italic mt-0.5" style="color: #c9a84c;">{{ $p->tagline }}</p>@endif
                                 <p class="text-xs mt-1 capitalize" style="color: #5a7060;">{{ str_replace('_',' ',$p->type) }}  &bull;  {{ ucfirst($p->difficulty ?? 'moderate') }}</p>
                             </div>
                         </div>
+                        @endif
                     </div>
 
                     {{-- Info grid --}}
@@ -610,11 +925,22 @@ $stepMeta = [
                             @if($p->meeting_point)<p class="text-xs text-stone-500 mt-0.5">Meet: {{ $p->meeting_point }}</p>@endif
                         </div>
                         <div class="p-3.5 rounded-xl border" style="background: rgba(201,168,76,0.06); border-color: rgba(201,168,76,0.3);">
-                            <p class="text-[9px] font-bold uppercase tracking-widest mb-1.5" style="color: #c9a84c;">💰 Ticket Price</p>
+                            <p class="text-[9px] font-bold uppercase tracking-widest mb-1.5" style="color: #c9a84c;">💰 Pricing</p>
                             <p class="text-xl font-bold" style="color: #0d2117;">R{{ number_format($p->price ?? $p->suggestedPrice(), 2) }}</p>
                             @if($p->includes_transport)<p class="text-xs text-amber-700 mt-0.5">+ R{{ number_format($p->transport_fee,2) }} transport</p>@endif
+                            @if(($p->nights ?? 0) > 0)<p class="text-xs text-indigo-600 mt-0.5">+ R{{ number_format($p->accommodation_cost_per_person,2) }} × {{ $p->nights }} night{{ $p->nights > 1 ? 's' : '' }} accommodation</p>@endif
                         </div>
                     </div>
+
+                    {{-- Accommodation summary --}}
+                    @if(($p->nights ?? 0) > 0)
+                    <div class="p-3.5 rounded-xl border border-indigo-100" style="background: rgba(99,102,241,0.04);">
+                        <p class="text-[9px] font-bold uppercase tracking-widest text-indigo-400 mb-2">🛏 Overnight — {{ $p->nights }} night{{ $p->nights > 1 ? 's' : '' }}</p>
+                        @if($p->accommodation_name)<p class="text-sm font-semibold text-stone-800">{{ $p->accommodation_name }}</p>@endif
+                        @if($p->what_is_included)<p class="text-xs text-stone-500 mt-1">{{ $p->what_is_included }}</p>@endif
+                        @if($p->what_to_bring)<p class="text-xs text-stone-400 mt-1"><span class="font-semibold text-stone-500">Bring:</span> {{ $p->what_to_bring }}</p>@endif
+                    </div>
+                    @endif
 
                     {{-- Expenses summary --}}
                     @if(!empty($p->expenses))
