@@ -128,5 +128,6 @@
     </main>
 
     @livewireScripts
+    @include('partials.monitoring-beacon')
 </body>
 </html>

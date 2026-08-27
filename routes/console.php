@@ -28,3 +28,7 @@ Schedule::call(function () {
             }
         });
 })->hourly()->name('trip-reminders')->withoutOverlapping();
+
+// ── Xquisite monitoring heartbeat ── sync, not queued, so a dead queue
+// worker can't mask an outage (see App\Jobs\ReportHealthStatus).
+Schedule::job(new \App\Jobs\ReportHealthStatus)->everyFiveMinutes();

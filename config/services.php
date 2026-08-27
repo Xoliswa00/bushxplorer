@@ -45,4 +45,10 @@ return [
         'page_access_token'  => env('FACEBOOK_PAGE_ACCESS_TOKEN'),
     ],
 
+    'monitoring' => [
+        'enabled' => env('MONITORING_ENABLED', false),
+        'url'     => env('MONITORING_URL'), // Base URL of the Xquisite monitoring instance for this site
+        'token'   => env('MONITORING_TOKEN'),
+    ],
+
 ];
