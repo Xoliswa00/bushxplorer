@@ -36,13 +36,19 @@ return [
     ],
 
     'instagram' => [
-        'account_id'   => env('INSTAGRAM_ACCOUNT_ID'),
+        'account_id' => env('INSTAGRAM_ACCOUNT_ID'),
         'access_token' => env('INSTAGRAM_ACCESS_TOKEN'),
     ],
 
     'facebook' => [
-        'page_id'            => env('FACEBOOK_PAGE_ID'),
-        'page_access_token'  => env('FACEBOOK_PAGE_ACCESS_TOKEN'),
+        'page_id' => env('FACEBOOK_PAGE_ID'),
+        'page_access_token' => env('FACEBOOK_PAGE_ACCESS_TOKEN'),
+    ],
+
+    'monitoring' => [
+        'enabled' => env('MONITORING_ENABLED', false),
+        'url' => env('MONITORING_URL'), // Base URL of the Xquisite monitoring instance for this site
+        'token' => env('MONITORING_TOKEN'),
     ],
 
 ];
